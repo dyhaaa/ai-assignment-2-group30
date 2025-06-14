@@ -1,0 +1,63 @@
+#Global Varaibles here
+energyCost = 10
+StepCost = 1
+currentEnergyCost = 0
+currentStepCost = 0
+currentTreasureCount = 0
+
+class TrapsAndRewards:
+    #Getter Methods
+    def getCurrentEnergyCost():
+        return currentEnergyCost
+
+    def getCurrentStepCost():
+        return currentStepCost
+
+    def getCurrentTreasureCount():
+        return currentTreasureCount
+
+    #Adds 1 Treasure to the Count unknown if nessasary waiting for other stuff
+    def updateTreasure():
+        global currentTreasureCount
+        currentTreasureCount+= 1
+
+    #Use this for Movement updating EnergyCost
+    def updateEnergyCost():
+        global currentEnergyCost
+        global energyCost
+        currentEnergyCost+= energyCost
+
+    #Use This for Movement Updating StepCost
+    def updateStepCost():
+        global currentStepCost
+        global StepCost
+        currentStepCost+= StepCost
+
+    #Trap 1 Condition Every step you take will consume double the energy as previous
+    def Trap1Condition():
+        global energyCost
+        energyCost = energyCost * 2
+    #Trap 2 Condition You will take double the steps to move to the adjacent cell.
+    def Trap2Condition():
+        global StepCost
+        StepCost = StepCost * 2
+
+    #Trap 3 Condition This trap will move you two cells away following your last movement direction.
+    #def Trap3Condition():
+    # Cant write this until Map is complete
+
+    #Trap 4 Condition This trap will remove all treasures that have not been collected
+    #def Trap4Condition():
+    #cant Write until map is complete
+    # Write a Command to delete all avaliable Treasure ig
+
+    #Reward 1 Condition Every step you take will consume half the energy as previous
+    def Reward1Condition():
+        global energyCost
+        energyCost = energyCost/2
+
+    #Reward 2 Condition You will take half the steps to move to the adjacent cell
+    def Reward2Condition():
+        global StepCost
+        StepCost = StepCost/2
+
