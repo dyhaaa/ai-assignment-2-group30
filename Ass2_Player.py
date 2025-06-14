@@ -17,22 +17,8 @@ class Position:
         return f"[{self.q}, {self.r}, {self.s}]"
 
 class Player:
-    """
-    Variable Explination:
-    ============================
-    history: Stores a list of positions (Non-inclusive of current pos.) to be used for Trap 3
-    position: Current position
-    treasure: How many treasure has been picked up
-    step: How many steps has been taken
-    energy: How many energy has been used
-    stepCost: How many steps taken to move to adjacent tile, modify for Reward 1
-    energyCost: How many energy is used per step, modify for Reward 2
     
-    To Create an create the Pioneer Player: Player([], <Starting Room Position>, 0, 0, 0, <Initial Step Cost>, <Initial Energy Cost>)
-    NOTE: When populating Players don't reference the identifiers (i.e p2 = p1) create a deepcopy (i.e p2 = copy.deepcopy(p1))
-    """
-    
-    def __init__(self, history: [Position], position: Position, treasure: int, step: float, energy: float, stepCost: float, energyCost: float):
+    def __init__(self, history: list[Position], position: Position, treasure: int, step: int, energy: int, stepCost: int, energyCost:int):
         self.history = history
         self.position = position
         self.treasure = treasure
@@ -66,7 +52,7 @@ class Player:
     def getEnergyCost(self):
         return self.energyCost
     
-    def setHistory(self, new: [Position]):
+    def setHistory(self, new: list[Position]):
         self.history = new
     def setPosition(self, new: Position):
         self.position = new
