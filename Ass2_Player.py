@@ -16,7 +16,7 @@ class Position:
 
 class Player:
     
-    def __init__(self, history: [Position], position: Position, treasure: int, step: int, energy: int, stepCost: int, energyCost:int):
+    def __init__(self, history: list[Position], position: Position, treasure: int, step: int, energy: int, stepCost: int, energyCost:int):
         self.history = history
         self.position = position
         self.treasure = treasure
