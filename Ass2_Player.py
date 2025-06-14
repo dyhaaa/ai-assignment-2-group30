@@ -32,7 +32,7 @@ class Player:
     NOTE: When populating Players don't reference the identifiers (i.e p2 = p1) create a deepcopy (i.e p2 = copy.deepcopy(p1))
     """
     
-    def __init__(self, history: [Position], position: Position, treasure: int, step: int, energy: int, stepCost: int, energyCost:int):
+    def __init__(self, history: [Position], position: Position, treasure: int, step: float, energy: float, stepCost: float, energyCost: float):
         self.history = history
         self.position = position
         self.treasure = treasure
@@ -50,6 +50,38 @@ class Player:
             num += 1
         return f"History: {posstr}\nCurrent Pos:{self.position}\nSteps:{self.step}, Energy:{self.energy}\nSteps Cost:{self.stepCost}, Energy Cost:{self.energyCost}\nTreasure:{self.treasure}\n"
     
+    #Setters and Getters
+    def getHistory(self):
+        return self.history
+    def getPosition(self):
+        return self.position
+    def getTreasure(self):
+        return self.treasure
+    def getStep(self):
+        return self.step
+    def getEnergy(self):
+        return self.energy
+    def getStepCost(self):
+        return self.stepCost
+    def getEnergyCost(self):
+        return self.energyCost
+    
+    def setHistory(self, new: [Position]):
+        self.history = new
+    def setPosition(self, new: Position):
+        self.position = new
+    def setTreasure(self, new: int):
+        self.treasure = new
+    def setStep(self, new: float):
+        self.step = new
+    def setEnergy(self, new: float):
+        self.energy = new
+    def setStepCost(self, new: float):
+        self.stepCost = new
+    def setEnergyCost(self, new: float):
+        self.energyCost = new
+        
+    # Class Methods
     # Stores the current position in history then sets the position in the parameters to the new one, also adds the steps and energy based on stepCost and energyCost
     def moveTile(self, target: Position):
         #Check weather tile is valid
