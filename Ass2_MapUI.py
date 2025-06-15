@@ -1,5 +1,3 @@
-# ? ! plan: trap, rewards popup uis, player icon, show path history, show chosen best paths
-
 import pygame
 import math
 from Map_Generation import Map
@@ -89,22 +87,47 @@ def main():
     # Initialize the map
     game_map = Map()
 
-    # Special hexagons, might change this to be taken straight from game_map without needing to manually append
-    special_hexagons = [
+    # Special hexagons list to be put on map, created empty
+    special_hexagons = []
+
+    # Add entry point tile
+    special_hexagons.append(
         {
             'coord': (0, 0, 0),  # Entry tile
             'colour': (0, 180, 255),
             'icon': 'Entry'
         }
+    )
+
+    # Add special hexagons from map
+    # List of tuples containing the coordinate list and their properties
+    coord_lists = [
+        (game_map.obstacle_coords, (100, 100, 100), None),
+        (game_map.Trap1_Coords, (200, 150, 255), '-1'),
+        (game_map.Trap2_Coords, (200, 150, 255), '+2'),
+        (game_map.Trap3_Coords, (200, 150, 255), 'x3'),
+        (game_map.Trap4_Coords, (200, 150, 255), '/4'),
+        (game_map.Reward1_Coords, (80, 200, 170), '+1'),
+        (game_map.Reward2_Coords, (80, 200, 170), 'x2'),
+        (game_map.Treasure, (255, 180, 20), None)
     ]
 
-    # Add obstacles from generated map
-    for coord in game_map.obstacle_coords:
-        special_hexagons.append({
-            'coord': coord,
-            'colour': (100, 100, 100),
-            'icon': None
-        })
+    print("SPECIAL: ")
+    print(special_hexagons)
+
+    # Single loop to process all coordinates and their properties
+    # Whole thing appends the given special hexagons into special_hexagon to be drawn
+    # Check if only one coordinate of special hexagon, if so prevents splitting of the coordinate from (x, x, x) into single coordinates and doesn't draw the hexagon
+    for coord_list, colour, icon in coord_lists:
+        for coord in coord_list:
+            special_hexagons.append({
+                'coord': coord,
+                'colour': colour,
+                'icon': icon
+            })
+
+    print("SPECIAL: ")
+    print(special_hexagons)
 
     hex_tiles = draw_map(game_map.hex_map, special_hexagons, hex_radius)
 
