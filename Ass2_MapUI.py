@@ -2,11 +2,6 @@ import pygame
 import math
 from Map_Generation import Map
 
-#
-#
-#
-# MAP UI
-
 # Constant variables
 
 background_colour = (200, 200, 200)
@@ -108,16 +103,21 @@ def main():
     # List of tuples containing the coordinate list and their properties
     coord_lists = [
         (game_map.obstacle_coords, (100, 100, 100), None),
-        (game_map.Trap1_Coords, (200, 150, 255), '-'),
-        (game_map.Trap2_Coords, (200, 150, 255), '+'),
-        (game_map.Trap3_Coords, (200, 150, 255), 'x'),
-        (game_map.Trap4_Coords, (200, 150, 255), '/'),
-        (game_map.Reward1_Coords, (80, 200, 170), '+'),
-        (game_map.Reward2_Coords, (80, 200, 170), 'x'),
+        (game_map.Trap1_Coords, (200, 150, 255), '-1'),
+        (game_map.Trap2_Coords, (200, 150, 255), '+2'),
+        (game_map.Trap3_Coords, (200, 150, 255), 'x3'),
+        (game_map.Trap4_Coords, (200, 150, 255), '/4'),
+        (game_map.Reward1_Coords, (80, 200, 170), '+1'),
+        (game_map.Reward2_Coords, (80, 200, 170), 'x2'),
         (game_map.Treasure, (255, 180, 20), None)
     ]
 
+    print("SPECIAL: ")
+    print(special_hexagons)
+
     # Single loop to process all coordinates and their properties
+    # Whole thing appends the given special hexagons into special_hexagon to be drawn
+    # Check if only one coordinate of special hexagon, if so prevents splitting of the coordinate from (x, x, x) into single coordinates and doesn't draw the hexagon
     for coord_list, colour, icon in coord_lists:
         for coord in coord_list:
             special_hexagons.append({
@@ -125,6 +125,9 @@ def main():
                 'colour': colour,
                 'icon': icon
             })
+
+    print("SPECIAL: ")
+    print(special_hexagons)
 
     hex_tiles = draw_map(game_map.hex_map, special_hexagons, hex_radius)
 
