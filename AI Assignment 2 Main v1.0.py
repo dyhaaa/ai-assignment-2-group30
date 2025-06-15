@@ -452,7 +452,7 @@ class HexagonTile:
         # Draw icon if needed
         if self.icon:
             symbol = text.render(self.icon, True, (255, 255, 255))
-            symbol_rect = symbol.get_rect(center=(self.x, self.y))
+            symbol_rect = symbol.get_rect(center=(self.x, self.y-5))
             screen.blit(symbol, symbol_rect)
 
 
@@ -496,7 +496,7 @@ def main():
     pygame.init()
     screen = pygame.display.set_mode((1000, 800), pygame.RESIZABLE)
     pygame.display.set_caption("Treasure Hunt In a Virtual World")
-    text = pygame.font.SysFont('Arial', 30)
+    text = pygame.font.Font('Arial-Unicode-MS.ttf', 50)
 
     # Initialize the map
     game_map = Map()
@@ -509,7 +509,7 @@ def main():
         {
             'coord': (0, 0, 0),
             'colour': (0, 180, 255),
-            'icon': 'Entry'
+            'icon': '↘'  # Entry tile
         }
     )
 
@@ -517,12 +517,12 @@ def main():
     # List of tuples containing the coordinate list and their properties
     coord_lists = [
         (game_map.Obstacle_Coords, (100, 100, 100), None),
-        (game_map.Trap1_Coords, (200, 150, 255), '-'),
-        (game_map.Trap2_Coords, (200, 150, 255), '+'),
-        (game_map.Trap3_Coords, (200, 150, 255), 'x'),
-        (game_map.Trap4_Coords, (200, 150, 255), '/'),
-        (game_map.Reward1_Coords, (80, 200, 170), '+'),
-        (game_map.Reward2_Coords, (80, 200, 170), 'x'),
+        (game_map.Trap1_Coords, (200, 150, 255), '⊖'),
+        (game_map.Trap2_Coords, (200, 150, 255), '⊕'),
+        (game_map.Trap3_Coords, (200, 150, 255), '⊗'),
+        (game_map.Trap4_Coords, (200, 150, 255), '⊘'),
+        (game_map.Reward1_Coords, (80, 200, 170), '⊞'),
+        (game_map.Reward2_Coords, (80, 200, 170), '⊠'),
         (game_map.Treasure_Coords, (255, 180, 20), None)
     ]
 
@@ -543,6 +543,7 @@ def main():
         for tile in hex_tiles:
             tile.draw(screen, text)
 
+        # Doesn't flip like a shape, updates the full display Surface to the screen
         pygame.display.flip()
 
         for event in pygame.event.get():
