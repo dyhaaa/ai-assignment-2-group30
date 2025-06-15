@@ -2,6 +2,7 @@
 NOTE:
 the coordinates for cube is (q,r,s), where q is up and down (originally east and west, but for simplicity, we say up and down); 
 r is northeast and southwest (/); s is northwest and southeast (backslash)
+r is northeast and southwest (/); s is northwest and southeast (\)
 We must ensure that q + r + s = 0 so when one coord is +1, there must be another to subtract 1 to ensure that it equals 0.
 
 For flat-top hexagons:
@@ -43,6 +44,7 @@ class Map:
 
         # Initialize the starting coordinates (0,0,0) to be the entry tile
         self.set_tile((0,0,0), "entry")
+        self.set_tile((0, 0, 0), {"tile": "entry"})
 
         # A tuple containing coordinates for all existing obstacles on the map
         self.obstacle_coords = (
