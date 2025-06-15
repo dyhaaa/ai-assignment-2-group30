@@ -1,9 +1,20 @@
-# -*- coding: utf-8 -*-
 from copy import deepcopy
 from enum import Enum
 import pygame
 import math
 
+# Cube direction vectors, used in calculating the movement coordinates.
+# Would be useful for the search algorithm, so I kept it outside of the Map class (Intended to be a global variable in the main file)
+direction = {
+
+    "up": (0, -1, 1),
+    "down": (0, 1, -1),
+    "NE": (1, -1, 0),
+    "SW": (-1, 1, 0),
+    "NW": (-1, 0, 1),
+    "SE": (1, 0, -1)
+
+}
 
 class Position:
     def __init__(self, q, r, s):
@@ -164,38 +175,6 @@ class Player:
             print("No More Treasure can be Collected. Trap 4 Activated.")
 
 
-'''
-NOTE:
-the coordinates for cube is (q,r,s), where q is up and down (originally east and west, but for simplicity, we say up and down); 
-r is northeast and southwest (/); s is northwest and southeast (backslash)
-r is northeast and southwest (/); s is northwest and southeast (\)
-We must ensure that q + r + s = 0 so when one coord is +1, there must be another to subtract 1 to ensure that it equals 0.
-
-For flat-top hexagons:
-Up: q = 0, r - 1, s + 1
-Down: q = 0, r + 1, s - 1
-NE: q + 1, r - 1, s = 0
-SW: q - 1, r + 1, s = 0
-NW: q - 1, r = 0, s + 1
-SE: q + 1, r = 0, s - 1
-
-'''
-
-# Cube direction vectors
-# Coordinates kept in tuples as to not allow any values changing mid execution
-# Would be useful for the search algorithm, so I kept it outside of the Map class (Intended to be a global variable in the main file)
-direction = {
-
-    "up": (0, -1, 1),
-    "down": (0, 1, -1),
-    "NE": (1, -1, 0),
-    "SW": (-1, 1, 0),
-    "NW": (-1, 0, 1),
-    "SE": (1, 0, -1)
-
-}
-
-
 class Map:
 
     def __init__(self):
@@ -208,9 +187,6 @@ class Map:
 
         # When initialized, we automatically generate an empty map
         self.generate_empty_map()
-
-        # Initialize the starting coordinates (0,0,0) to be the entry tile
-        self.set_tile((0, 0, 0), TileType.EMPTY)
 
         # A tuple containing coordinates for all existing special hexagons (obstacles, traps, rewards, treasures) on the map
         self.Obstacle_Coords = (
@@ -267,7 +243,6 @@ class Map:
         self.fill_map(self.Treasure_Coords, TileType.TREASURE)
 
     # toString Method
-
     def __str__(self):
         string = "Coordinates : Tile Type"
         for key, tile in self.hex_map.items():
@@ -310,8 +285,7 @@ class Map:
             # Generate 9 rows. We don't generate 10 rows because we already have the starting column added
             for row in range(9):
                 # Generating coordinates for the next tile in the row
-                next_row_tile = self.add_new_tile_coords(
-                    current_row_tile, direction[self.NE_SE_cycle[0]])
+                next_row_tile = self.add_new_tile_coords(current_row_tile, direction[self.NE_SE_cycle[0]])
                 # Add the new tile into the dictionary and declaring the tile empty
                 self.hex_map[next_row_tile] = TileType.EMPTY
                 # Set the current row as the next one so we can continuously go down the row
@@ -320,33 +294,123 @@ class Map:
                 self.swap_direction(self.NE_SE_cycle)
 
             # After generating the row, we update the column to move to the next one
-            next_col = self.add_new_tile_coords(
-                current_col_tile, direction["down"])
+            next_col = self.add_new_tile_coords(current_col_tile, direction["down"])
             current_col_tile = next_col  # Move the current column to the next one
             current_row_tile = next_col  # Reset the current row to go to the next column
 
             # Swap the direction again as when we move to the next column, we want to reset it back to the NE-SE state
             self.swap_direction(self.NE_SE_cycle)
 
-    # A function that only sets one tile with a given tile type
-    def set_tile(self, tile_coord: tuple, tile_type):
-        self.hex_map[tile_coord] = tile_type
-
     # A function to add features/conditions into multiple tiles of the map
+    # Parameter meaning: tile_coords is a tuple containing multiple coordinates that need to be changed. tile_type is the type of tile the chosen hexagons will be.
     def fill_map(self, tile_coords: tuple, tile_type: TileType):
         for coordinate in tile_coords:
             self.hex_map[coordinate] = tile_type
 
+    # A function to return a list of valid coordinates the player can go to
+    # Parameter meaning: cur_pos is current_position of the player, takes in the current tile coordinate the player is in
+    def check_valid_tiles(self, cur_pos : tuple) -> list[tuple]:
+        # List that will hold all the valid tiles the player can move to
+        valid_tiles = []
+        
+        # Dictionary that contains all hexagons that surround the player's current position
+        surrounding_tiles = {}
+
+        # Appending the dictionary with the surrounding tile coords
+        surrounding_tiles["up"] = self.add_new_tile_coords(cur_pos, direction['up'])
+        surrounding_tiles["down"] = self.add_new_tile_coords(cur_pos, direction['down'])
+        surrounding_tiles["NE"] = self.add_new_tile_coords(cur_pos, direction['NE'])
+        surrounding_tiles["NW"] = self.add_new_tile_coords(cur_pos, direction['NW'])
+        surrounding_tiles["SE"] = self.add_new_tile_coords(cur_pos, direction['SE'])
+        surrounding_tiles["SW"] = self.add_new_tile_coords(cur_pos, direction['SW'])
+
+        # dictionary containing the pairing of coordinates q and r
+        # Mainly used for checking the border of both top and bottom rows, excluding the columns at q = 0 and q = 9
+        top_row_pair = {1 : -1, 2 : -1, 3 : -2, 4 : -2, 5 : -3, 6 : -3, 7 : -4, 8 : -4}
+        bottom_row_pair = {1 : 4, 2 : 4, 3 : 3, 4 : 3, 5 : 2, 6 : 2, 7 : 1, 8 : 1}
+
+        # Assigning coordinate position value to respective variable
+        q = cur_pos[0]
+        r = cur_pos[1]
+
+        # Checking to see if the player's current position is in the border of the map
+        # Apply necessary changes if the condition is met
+        # Checking for left column excluding corners
+        if(q == 0 and (r > 0 and r < 5)):
+            surrounding_tiles.pop('NW')
+            surrounding_tiles.pop('SW')
+        # Checking for right column excluding corners
+        elif(q == 9 and (r > -5 and r < 0)):
+            surrounding_tiles.pop('NE')
+            surrounding_tiles.pop('SE')
+        # Checking for NE top row
+        elif((q % 2 != 0) and (q > 0 and q < 9) and ((q in top_row_pair) and top_row_pair[q] == r)):
+            surrounding_tiles.pop('up')
+            surrounding_tiles.pop('NW')
+            surrounding_tiles.pop('NE')
+        # Checking for SE top row
+        elif((q % 2 == 0) and (q > 0 and q < 9) and ((q in top_row_pair) and top_row_pair[q] == r)):
+            surrounding_tiles.pop('up')
+        # Checking for NE bottom row
+        elif((q % 2 != 0) and (q > 0 and q < 9) and ((q in bottom_row_pair) and bottom_row_pair[q] == r)):
+            surrounding_tiles.pop('down')
+        # Checking for SE bottom row
+        elif((q % 2 == 0) and (q > 0 and q < 9) and ((q in bottom_row_pair) and bottom_row_pair[q] == r)):
+            surrounding_tiles.pop('down')
+            surrounding_tiles.pop('SW')
+            surrounding_tiles.pop('SE')
+        # Checking for top left corner
+        elif(q == 0 and r == 0):
+            surrounding_tiles.pop('up')
+            surrounding_tiles.pop('NW')
+            surrounding_tiles.pop('SW')
+        # Checking for bottom left corner
+        elif(q == 0 and r == 5):
+            surrounding_tiles.pop('down')
+            surrounding_tiles.pop('NW')
+            surrounding_tiles.pop('SW')
+            surrounding_tiles.pop('SE')
+        # Checking for top right corner
+        elif(q == 9 and r == -5):
+            surrounding_tiles.pop('up')
+            surrounding_tiles.pop('NW')
+            surrounding_tiles.pop('NE')
+            surrounding_tiles.pop('SE')
+        # Checking for bottom right corner
+        elif(q == 9 and r == 0):
+            surrounding_tiles.pop('down')
+            surrounding_tiles.pop('SE')
+            surrounding_tiles.pop('NE')
+
+        # The remaining valid tiles after checking if it's a border tile will be checked if it is an obstacle or not
+        # To not mess with the dictionary since we're going to remove elements in it, we will use a copy of list of all keys in the dict
+        for tile in list(surrounding_tiles.keys()):
+            # Accessing the coordinate from the surrounding_tiles dict
+            coord = surrounding_tiles[tile]
+            # If the coordinate does not exist
+            if coord not in self.hex_map:
+                # We get rid of the coordinate
+                surrounding_tiles.pop(tile)
+            # If the coordinate is an obstacle
+            elif self.hex_map[coord] == TileType.OBSTACLE:
+                # Remove it from the list since it isn't a valid tile for the player to move into
+                surrounding_tiles.pop(tile)
+        
+        # Finally, after filtering, we can return the list of coordinates containing coords that are valid for the player to move to
+        for valid_tile_coord in surrounding_tiles.values():
+            valid_tiles.append(valid_tile_coord)
+
+        return valid_tiles
 
 # DEBUG
 
-"""
+'''
 new_map = Map()
 
 print(new_map)
 print("total amount of tiles: ", len(new_map.hex_map))
-"""
-
+print(new_map.check_valid_tiles((0,0,0)))
+'''
 
 #
 #
