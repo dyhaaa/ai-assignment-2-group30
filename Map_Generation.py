@@ -43,7 +43,6 @@ class Map:
         self.generate_empty_map()
 
         # Initialize the starting coordinates (0,0,0) to be the entry tile
-        self.set_tile((0,0,0), "entry")
         self.set_tile((0, 0, 0), {"tile": "entry"})
 
         # A tuple containing coordinates for all existing obstacles on the map
