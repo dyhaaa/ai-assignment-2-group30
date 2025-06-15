@@ -388,7 +388,7 @@ class HexagonTile:
         # Draw icon if needed
         if self.icon:
             symbol = text.render(self.icon, True, (255, 255, 255))
-            symbol_rect = symbol.get_rect(center=(self.x, self.y))
+            symbol_rect = symbol.get_rect(center=(self.x, self.y-5))
             screen.blit(symbol, symbol_rect)
 
 
@@ -432,7 +432,7 @@ def main():
     pygame.init()
     screen = pygame.display.set_mode((1000, 800), pygame.RESIZABLE)
     pygame.display.set_caption("Treasure Hunt In a Virtual World")
-    text = pygame.font.Font('Arial-Unicode-MS.ttf', 30)
+    text = pygame.font.Font('Arial-Unicode-MS.ttf', 50)
 
     # Initialize the map
     game_map = Map()
@@ -445,7 +445,7 @@ def main():
         {
             'coord': (0, 0, 0),
             'colour': (0, 180, 255),
-            'icon': 'Entry'
+            'icon': '↘'  # Entry tile
         }
     )
 
