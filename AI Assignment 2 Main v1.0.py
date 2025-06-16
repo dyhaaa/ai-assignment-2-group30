@@ -579,6 +579,7 @@ def make_special_hexagons(map):
 
 
 def draw_popup(screen, cursor_pos, selected_hex, font):
+
     # Popup position
     popup_x = cursor_pos[0] + 10
     popup_y = cursor_pos[1] + 10
@@ -601,6 +602,18 @@ def draw_popup(screen, cursor_pos, selected_hex, font):
     description_rect = description_surface.get_rect(
         center=(popup_x + popup_width//2, popup_y + popup_height//2))
     screen.blit(description_surface, description_rect)
+
+
+def drag_map(drag_start_pos, map_offset_x, map_offset_y):
+    # For map dragging
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    dx = mouse_x - drag_start_pos[0]
+    dy = mouse_y - drag_start_pos[1]
+    map_offset_x += dx
+    map_offset_y += dy
+    drag_start_pos = (mouse_x, mouse_y)
+
+    return drag_start_pos, map_offset_x, map_offset_y
 
 
 def main():
@@ -673,12 +686,9 @@ def main():
 
             # While holding down left mouse button and moving mouse
             elif event.type == pygame.MOUSEMOTION and dragging:
-                mouse_x, mouse_y = pygame.mouse.get_pos()
-                dx = mouse_x - drag_start_pos[0]
-                dy = mouse_y - drag_start_pos[1]
-                map_offset_x += dx
-                map_offset_y += dy
-                drag_start_pos = (mouse_x, mouse_y)
+                # Drag map and change offsets
+                drag_start_pos, map_offset_x, map_offset_y = drag_map(
+                    drag_start_pos, map_offset_x, map_offset_y)
                 # Redraw map with updated offset
                 hex_tiles = draw_map(
                     game_map.hex_map, special_hexagons, HEX_RADIUS, map_offset_x, map_offset_y)
