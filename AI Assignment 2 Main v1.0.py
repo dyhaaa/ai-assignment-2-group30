@@ -310,107 +310,112 @@ class Map:
     # A function to return a list of valid coordinates the player can go to
     # Parameter meaning: cur_pos is current_position of the player, takes in the current tile coordinate the player is in
     def check_valid_tiles(self, cur_pos : tuple) -> list[tuple]:
-        # List that will hold all the valid tiles the player can move to
-        valid_tiles = []
-        
-        # Dictionary that contains all hexagons that surround the player's current position
-        surrounding_tiles = {}
+        # Checking to see if the coordinates passed into the argument exists in the map
+        # if it doesn't, we throw an exception error message
+        if(cur_pos not in self.hex_map):
+            raise Exception(f"The position: {cur_pos}, is invalid. Cannot be found in the map.")
+        else:
+            # List that will hold all the valid tiles the player can move to
+            valid_tiles = []
+            
+            # Dictionary that contains all hexagons that surround the player's current position
+            surrounding_tiles = {}
 
-        # Appending the dictionary with the surrounding tile coords
-        surrounding_tiles["up"] = self.add_new_tile_coords(cur_pos, direction['up'])
-        surrounding_tiles["down"] = self.add_new_tile_coords(cur_pos, direction['down'])
-        surrounding_tiles["NE"] = self.add_new_tile_coords(cur_pos, direction['NE'])
-        surrounding_tiles["NW"] = self.add_new_tile_coords(cur_pos, direction['NW'])
-        surrounding_tiles["SE"] = self.add_new_tile_coords(cur_pos, direction['SE'])
-        surrounding_tiles["SW"] = self.add_new_tile_coords(cur_pos, direction['SW'])
+            # Appending the dictionary with the surrounding tile coords
+            surrounding_tiles["up"] = self.add_new_tile_coords(cur_pos, direction['up'])
+            surrounding_tiles["down"] = self.add_new_tile_coords(cur_pos, direction['down'])
+            surrounding_tiles["NE"] = self.add_new_tile_coords(cur_pos, direction['NE'])
+            surrounding_tiles["NW"] = self.add_new_tile_coords(cur_pos, direction['NW'])
+            surrounding_tiles["SE"] = self.add_new_tile_coords(cur_pos, direction['SE'])
+            surrounding_tiles["SW"] = self.add_new_tile_coords(cur_pos, direction['SW'])
 
-        # dictionary containing the pairing of coordinates q and r
-        # Mainly used for checking the border of both top and bottom rows, excluding the columns at q = 0 and q = 9
-        top_row_pair = {1 : -1, 2 : -1, 3 : -2, 4 : -2, 5 : -3, 6 : -3, 7 : -4, 8 : -4}
-        bottom_row_pair = {1 : 4, 2 : 4, 3 : 3, 4 : 3, 5 : 2, 6 : 2, 7 : 1, 8 : 1}
+            # dictionary containing the pairing of coordinates q and r
+            # Mainly used for checking the border of both top and bottom rows, excluding the columns at q = 0 and q = 9
+            top_row_pair = {1 : -1, 2 : -1, 3 : -2, 4 : -2, 5 : -3, 6 : -3, 7 : -4, 8 : -4}
+            bottom_row_pair = {1 : 4, 2 : 4, 3 : 3, 4 : 3, 5 : 2, 6 : 2, 7 : 1, 8 : 1}
 
-        # Assigning coordinate position value to respective variable
-        q = cur_pos[0]
-        r = cur_pos[1]
+            # Assigning coordinate position value to respective variable
+            q = cur_pos[0]
+            r = cur_pos[1]
 
-        # Checking to see if the player's current position is in the border of the map
-        # Apply necessary changes if the condition is met
-        # Checking for left column excluding corners
-        if(q == 0 and (r > 0 and r < 5)):
-            surrounding_tiles.pop('NW')
-            surrounding_tiles.pop('SW')
-        # Checking for right column excluding corners
-        elif(q == 9 and (r > -5 and r < 0)):
-            surrounding_tiles.pop('NE')
-            surrounding_tiles.pop('SE')
-        # Checking for NE top row
-        elif((q % 2 != 0) and (q > 0 and q < 9) and ((q in top_row_pair) and top_row_pair[q] == r)):
-            surrounding_tiles.pop('up')
-            surrounding_tiles.pop('NW')
-            surrounding_tiles.pop('NE')
-        # Checking for SE top row
-        elif((q % 2 == 0) and (q > 0 and q < 9) and ((q in top_row_pair) and top_row_pair[q] == r)):
-            surrounding_tiles.pop('up')
-        # Checking for NE bottom row
-        elif((q % 2 != 0) and (q > 0 and q < 9) and ((q in bottom_row_pair) and bottom_row_pair[q] == r)):
-            surrounding_tiles.pop('down')
-        # Checking for SE bottom row
-        elif((q % 2 == 0) and (q > 0 and q < 9) and ((q in bottom_row_pair) and bottom_row_pair[q] == r)):
-            surrounding_tiles.pop('down')
-            surrounding_tiles.pop('SW')
-            surrounding_tiles.pop('SE')
-        # Checking for top left corner
-        elif(q == 0 and r == 0):
-            surrounding_tiles.pop('up')
-            surrounding_tiles.pop('NW')
-            surrounding_tiles.pop('SW')
-        # Checking for bottom left corner
-        elif(q == 0 and r == 5):
-            surrounding_tiles.pop('down')
-            surrounding_tiles.pop('NW')
-            surrounding_tiles.pop('SW')
-            surrounding_tiles.pop('SE')
-        # Checking for top right corner
-        elif(q == 9 and r == -5):
-            surrounding_tiles.pop('up')
-            surrounding_tiles.pop('NW')
-            surrounding_tiles.pop('NE')
-            surrounding_tiles.pop('SE')
-        # Checking for bottom right corner
-        elif(q == 9 and r == 0):
-            surrounding_tiles.pop('down')
-            surrounding_tiles.pop('SE')
-            surrounding_tiles.pop('NE')
+            # Checking to see if the player's current position is in the border of the map
+            # Apply necessary changes if the condition is met
+            # Checking for left column excluding corners
+            if(q == 0 and (r > 0 and r < 5)):
+                surrounding_tiles.pop('NW')
+                surrounding_tiles.pop('SW')
+            # Checking for right column excluding corners
+            elif(q == 9 and (r > -5 and r < 0)):
+                surrounding_tiles.pop('NE')
+                surrounding_tiles.pop('SE')
+            # Checking for NE top row
+            elif((q % 2 != 0) and (q > 0 and q < 9) and ((q in top_row_pair) and top_row_pair[q] == r)):
+                surrounding_tiles.pop('up')
+                surrounding_tiles.pop('NW')
+                surrounding_tiles.pop('NE')
+            # Checking for SE top row
+            elif((q % 2 == 0) and (q > 0 and q < 9) and ((q in top_row_pair) and top_row_pair[q] == r)):
+                surrounding_tiles.pop('up')
+            # Checking for NE bottom row
+            elif((q % 2 != 0) and (q > 0 and q < 9) and ((q in bottom_row_pair) and bottom_row_pair[q] == r)):
+                surrounding_tiles.pop('down')
+            # Checking for SE bottom row
+            elif((q % 2 == 0) and (q > 0 and q < 9) and ((q in bottom_row_pair) and bottom_row_pair[q] == r)):
+                surrounding_tiles.pop('down')
+                surrounding_tiles.pop('SW')
+                surrounding_tiles.pop('SE')
+            # Checking for top left corner
+            elif(q == 0 and r == 0):
+                surrounding_tiles.pop('up')
+                surrounding_tiles.pop('NW')
+                surrounding_tiles.pop('SW')
+            # Checking for bottom left corner
+            elif(q == 0 and r == 5):
+                surrounding_tiles.pop('down')
+                surrounding_tiles.pop('NW')
+                surrounding_tiles.pop('SW')
+                surrounding_tiles.pop('SE')
+            # Checking for top right corner
+            elif(q == 9 and r == -5):
+                surrounding_tiles.pop('up')
+                surrounding_tiles.pop('NW')
+                surrounding_tiles.pop('NE')
+                surrounding_tiles.pop('SE')
+            # Checking for bottom right corner
+            elif(q == 9 and r == 0):
+                surrounding_tiles.pop('down')
+                surrounding_tiles.pop('SE')
+                surrounding_tiles.pop('NE')
 
-        # The remaining valid tiles after checking if it's a border tile will be checked if it is an obstacle or not
-        # To not mess with the dictionary since we're going to remove elements in it, we will use a copy of list of all keys in the dict
-        for tile in list(surrounding_tiles.keys()):
-            # Accessing the coordinate from the surrounding_tiles dict
-            coord = surrounding_tiles[tile]
-            # If the coordinate does not exist
-            if coord not in self.hex_map:
-                # We get rid of the coordinate
-                surrounding_tiles.pop(tile)
-            # If the coordinate is an obstacle
-            elif self.hex_map[coord] == TileType.OBSTACLE:
-                # Remove it from the list since it isn't a valid tile for the player to move into
-                surrounding_tiles.pop(tile)
-        
-        # Finally, after filtering, we can return the list of coordinates containing coords that are valid for the player to move to
-        for valid_tile_coord in surrounding_tiles.values():
-            valid_tiles.append(valid_tile_coord)
+            # The remaining valid tiles after checking if it's a border tile will be checked if it is an obstacle or not
+            # To not mess with the dictionary since we're going to remove elements in it, we will use a copy of list of all keys in the dict
+            for tile in list(surrounding_tiles.keys()):
+                # Accessing the coordinate from the surrounding_tiles dict
+                coord = surrounding_tiles[tile]
+                # If the coordinate does not exist
+                if coord not in self.hex_map:
+                    # We get rid of the coordinate
+                    surrounding_tiles.pop(tile)
+                # If the coordinate is an obstacle
+                elif self.hex_map[coord] == TileType.OBSTACLE:
+                    # Remove it from the list since it isn't a valid tile for the player to move into
+                    surrounding_tiles.pop(tile)
+            
+            # Finally, after filtering, we can return the list of coordinates containing coords that are valid for the player to move to
+            for valid_tile_coord in surrounding_tiles.values():
+                valid_tiles.append(valid_tile_coord)
 
-        return valid_tiles
+            return valid_tiles
 
 # DEBUG
 
-'''
+
 new_map = Map()
 
 print(new_map)
 print("total amount of tiles: ", len(new_map.hex_map))
 print(new_map.check_valid_tiles((0,0,0)))
-'''
+
 
 #
 #
