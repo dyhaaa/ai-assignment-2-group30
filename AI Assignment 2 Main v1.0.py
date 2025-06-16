@@ -577,6 +577,31 @@ def make_special_hexagons(map):
     return special_hexagons
 
 
+def draw_popup(screen, cursor_pos, selected_hex, font):
+    # Popup position
+    popup_x = cursor_pos[0] + 10
+    popup_y = cursor_pos[1] + 10
+
+    # Popup box
+    popup_width = 300
+    popup_height = 200
+    popup_rect = pygame.Rect(
+        popup_x, popup_y, popup_width, popup_height)
+
+    # Draw background
+    pygame.draw.rect(screen, selected_hex['colour'], popup_rect)
+    # Draw border
+    pygame.draw.rect(screen, (50, 50, 50), popup_rect, 2)
+
+    # Draw description text
+    description = selected_hex['description']
+    description_surface = font.render(
+        description, True, (255, 255, 255))
+    description_rect = description_surface.get_rect(
+        center=(popup_x + popup_width//2, popup_y + popup_height//2))
+    screen.blit(description_surface, description_rect)
+
+
 def main():
     pygame.init()
     screen = pygame.display.set_mode((1000, 800), pygame.RESIZABLE)
@@ -588,7 +613,7 @@ def main():
     game_map = Map()
     # Make special hexagons list
     special_hexagons = make_special_hexagons(game_map)
-    # Draw whole map
+    # List map
     hex_tiles = draw_map(game_map.hex_map, special_hexagons, HEX_RADIUS)
 
     # Variables
@@ -605,6 +630,7 @@ def main():
 
     running = True
     while running:
+        # Draw map
         screen.fill(BACKGROUND_COLOUR)
         for tile in hex_tiles:
             tile.draw(screen, text)
@@ -650,28 +676,7 @@ def main():
 
         # Draw popup
         if show_popup and selected_hex:
-            # Popup position
-            popup_x = cursor_pos[0] + 10
-            popup_y = cursor_pos[1] + 10
-
-            # Popup box
-            popup_width = 300
-            popup_height = 200
-            popup_rect = pygame.Rect(
-                popup_x, popup_y, popup_width, popup_height)
-
-            # Draw background
-            pygame.draw.rect(screen, selected_hex['colour'], popup_rect)
-            # Draw border
-            pygame.draw.rect(screen, (50, 50, 50), popup_rect, 2)
-
-            # Draw description text
-            description = selected_hex['description']
-            description_surface = text_desc.render(
-                description, True, (255, 255, 255))
-            description_rect = description_surface.get_rect(
-                center=(popup_x + popup_width//2, popup_y + popup_height//2))
-            screen.blit(description_surface, description_rect)
+            draw_popup(screen, cursor_pos, selected_hex, text_desc)
 
         # Doesn't flip like a shape, just updates the display
         pygame.display.flip()
