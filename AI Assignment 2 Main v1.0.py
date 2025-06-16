@@ -163,31 +163,57 @@ class Player:
         self.energy += self.energyCost
 
     # Testing the functionality of history
-     def trap3(self):
+         def trap3(self, check_valid_tiles_func):
         if len(self.history) < 2:
             print("Not enough history to push back.")
             return
 
-        prev = self.history[-2]  # 2nd last
-        curr = self.history[-1]  # last move before current trap tile
+        prev = self.history[-2]
+        curr = self.history[-1]
 
-        # Determine direction of last movement
         dq = curr.q - prev.q
         dr = curr.r - prev.r
         ds = curr.s - prev.s
 
-        # Push backward from current tile
-        new_q = self.position.q - 2 * dq
-        new_r = self.position.r - 2 * dr
-        new_s = self.position.s - 2 * ds
+        # Calculate 2-step back position
+        new_q_2 = self.position.q - 2 * dq
+        new_r_2 = self.position.r - 2 * dr
+        new_s_2 = self.position.s - 2 * ds
 
-        if new_q + new_r + new_s != 0:
-            print("Invalid push-back position!")
+        if new_q_2 + new_r_2 + new_s_2 != 0:
+            print("Invalid 2-step back position (cube coordinates do not sum to zero).")
             return
 
-        print(f"Trap3 activated! Moving back from {self.position} to ({new_q}, {new_r}, {new_s})")
-        self.history.append(self.position)
-        self.position = Position(new_q, new_r, new_s)
+        new_coord_2 = (new_q_2, new_r_2)
+
+        # Calculate 1-step back position
+        new_q_1 = self.position.q - dq
+        new_r_1 = self.position.r - dr
+        new_s_1 = self.position.s - ds
+
+        if new_q_1 + new_r_1 + new_s_1 != 0:
+            print("Invalid 1-step back position (cube coordinates do not sum to zero).")
+            return
+
+        new_coord_1 = (new_q_1, new_r_1)
+
+        # Get valid tiles from current position
+        valid_tiles = check_valid_tiles_func((self.position.q, self.position.r))
+
+        # Try 2-step back first
+        if new_coord_2 in valid_tiles:
+            print(f"Trap3 activated! Moving 2 steps back from {self.position} to ({new_q_2}, {new_r_2}, {new_s_2})")
+            self.history.append(self.position)
+            self.position = Position(new_q_2, new_r_2, new_s_2)
+        # If 2-step back invalid, try 1-step back
+        elif new_coord_1 in valid_tiles:
+            print(
+                f"Trap3 activated! 2-step back invalid, moving 1 step back from {self.position} to ({new_q_1}, {new_r_1}, {new_s_1})")
+            self.history.append(self.position)
+            self.position = Position(new_q_1, new_r_1, new_s_1)
+        else:
+            print("Trap3 activated! Neither 2-step nor 1-step back is valid. Position unchanged.")
+
 
 
     # Method for Collecting Treasure Also used to Checking Treasure
