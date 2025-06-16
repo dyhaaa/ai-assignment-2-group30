@@ -441,14 +441,14 @@ print(new_map.check_valid_tiles((0, 0, 0)))
 # MAP UI
 # Constant variables
 
-background_colour = (220, 220, 220)
-hex_default_colour = (255, 255, 255)
-hex_radius = 50  # Size of hexagon
+BACKGROUND_COLOUR = (220, 220, 220)
+HEX_DEFAULT_COLOUR = (255, 255, 255)
+HEX_RADIUS = 50  # Size of hexagon
 
 
 class HexagonTile:
     # Class for a hexagon tile
-    def __init__(self, x, y, radius, colour=hex_default_colour, icon=None):
+    def __init__(self, x, y, radius, colour=HEX_DEFAULT_COLOUR, icon=None):
         self.x = x
         self.y = y
         self.radius = radius
@@ -497,7 +497,7 @@ def cube_to_screen(q, r, radius, origin_x=100, origin_y=150, offset_x=0, offset_
     return (screen_x, screen_y)
 
 
-def draw_map(hex_map, special_hexagons=None, radius=hex_radius, offset_x=0, offset_y=0):
+def draw_map(hex_map, special_hexagons=None, radius=HEX_RADIUS, offset_x=0, offset_y=0):
     # Hexagons list
     hexes = []
 
@@ -514,7 +514,7 @@ def draw_map(hex_map, special_hexagons=None, radius=hex_radius, offset_x=0, offs
 
         tile = HexagonTile(
             x, y, radius,
-            colour=special['colour'] if special else hex_default_colour,
+            colour=special['colour'] if special else HEX_DEFAULT_COLOUR,
             icon=special['icon'] if special else None
         )
         hexes.append(tile)
@@ -589,22 +589,23 @@ def main():
     # Make special hexagons list
     special_hexagons = make_special_hexagons(game_map)
     # Draw whole map
-    hex_tiles = draw_map(game_map.hex_map, special_hexagons, hex_radius)
+    hex_tiles = draw_map(game_map.hex_map, special_hexagons, HEX_RADIUS)
 
-    # Constants
+    # Variables
     # For dragging map
     map_offset_x = 0
     map_offset_y = 0
     dragging = False
     drag_start_pos = (0, 0)
-    # For hexagon highlighting, popups
+
+    # For hexagon highlighting and popups
     show_popup = False
     selected_hex = None
     cursor_pos = (0, 0)
 
     running = True
     while running:
-        screen.fill(background_colour)
+        screen.fill(BACKGROUND_COLOUR)
         for tile in hex_tiles:
             tile.draw(screen, text)
 
@@ -616,7 +617,7 @@ def main():
             for hex_info in special_hexagons:
                 q, r, s = hex_info['coord']
                 x, y = cube_to_screen(
-                    q, r, hex_radius, offset_x=map_offset_x, offset_y=map_offset_y)
+                    q, r, HEX_RADIUS, offset_x=map_offset_x, offset_y=map_offset_y)
                 if is_cursor_in_hex(cursor_pos[0], cursor_pos[1], hex_tile.x, hex_tile.y, hex_tile.radius) and (hex_tile.x, hex_tile.y) == (x, y):
                     hex_tile.highlight_hex(screen, (255, 255, 255), 3)
                     if event.type == pygame.MOUSEBUTTONDOWN:
@@ -629,26 +630,23 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:
-                    dragging = True
-                    drag_start_pos = pygame.mouse.get_pos()
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                dragging = True
+                drag_start_pos = pygame.mouse.get_pos()
 
-            elif event.type == pygame.MOUSEBUTTONUP:
-                if event.button == 1:
-                    dragging = False
+            elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                dragging = False
 
-            elif event.type == pygame.MOUSEMOTION:
-                if dragging:
-                    mouse_x, mouse_y = pygame.mouse.get_pos()
-                    dx = mouse_x - drag_start_pos[0]
-                    dy = mouse_y - drag_start_pos[1]
-                    map_offset_x += dx
-                    map_offset_y += dy
-                    drag_start_pos = (mouse_x, mouse_y)
-                    # Redraw map with updated offset
-                    hex_tiles = draw_map(
-                        game_map.hex_map, special_hexagons, hex_radius, map_offset_x, map_offset_y)
+            elif event.type == pygame.MOUSEMOTION and dragging:
+                mouse_x, mouse_y = pygame.mouse.get_pos()
+                dx = mouse_x - drag_start_pos[0]
+                dy = mouse_y - drag_start_pos[1]
+                map_offset_x += dx
+                map_offset_y += dy
+                drag_start_pos = (mouse_x, mouse_y)
+                # Redraw map with updated offset
+                hex_tiles = draw_map(
+                    game_map.hex_map, special_hexagons, HEX_RADIUS, map_offset_x, map_offset_y)
 
         # Draw popup
         if show_popup and selected_hex:
