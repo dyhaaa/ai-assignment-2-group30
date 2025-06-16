@@ -1,0 +1,138 @@
+import heapq
+from typing import Dict, List, Set, Tuple
+from Map_Generation import Map, direction
+
+class Node:
+    def __init__(self, position: Tuple[int, int, int], g_cost: float = float('inf'), h_cost: float = 0):
+        self.position = position
+        self.g_cost = g_cost  # Cost from start to current node
+        self.h_cost = h_cost  # Heuristic cost from current node to goal
+        self.f_cost = g_cost + h_cost  # Total cost
+        self.parent = None
+
+    def __lt__(self, other):
+        return self.f_cost < other.f_cost
+
+def get_neighbors(position: Tuple[int, int, int], game_map: Map) -> List[Tuple[int, int, int]]:
+    """Get valid neighboring positions for a given position."""
+    neighbors = []
+    for dir_vec in direction.values():
+        new_pos = (
+            position[0] + dir_vec[0],
+            position[1] + dir_vec[1],
+            position[2] + dir_vec[2]
+        )
+        # Check if the position exists in the map and is not an obstacle
+        if new_pos in game_map.hex_map and game_map.hex_map[new_pos].get("tile") != "obstacle":
+            neighbors.append(new_pos)
+    return neighbors
+
+def calculate_heuristic(pos1: Tuple[int, int, int], pos2: Tuple[int, int, int]) -> float:
+    """Calculate the Manhattan distance between two positions in the hexagonal grid."""
+    return (abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1]) + abs(pos1[2] - pos2[2])) / 2
+
+def a_star_search(game_map: Map, start: Tuple[int, int, int], goal: Tuple[int, int, int], known_traps=None, known_rewards=None, known_treasures=None) -> List[Tuple[int, int, int]]:
+    """
+    A* search algorithm implementation for hexagonal grid.
+    
+    Args:
+        game_map: Map object containing the game state
+        start: Starting position (q, r, s)
+        goal: Goal position (q, r, s)
+        known_traps: Set of known trap coordinates
+        known_rewards: Set of known reward coordinates
+        known_treasures: Set of known treasure coordinates
+    
+    Returns:
+        List of positions forming the path from start to goal
+    """
+    if known_traps is None:
+        known_traps = set()
+    if known_rewards is None:
+        known_rewards = set()
+    if known_treasures is None:
+        known_treasures = set()
+        
+    # Priority queue for open set
+    open_set = PriorityQueue()
+    open_set.put((0, start))
+    
+    # Dictionary to store the path
+    came_from = {}
+    
+    # Dictionary to store the cost from start to each node
+    g_score = {start: 0}
+    
+    # Dictionary to store the estimated total cost from start to goal through each node
+    f_score = {start: calculate_heuristic(start, goal)}
+    
+    # Set to keep track of nodes in open set
+    open_set_hash = {start}
+    
+    while not open_set.empty():
+        current = open_set.get()[1]
+        open_set_hash.remove(current)
+        
+        if current == goal:
+            # Reconstruct path
+            path = []
+            while current in came_from:
+                path.append(current)
+                current = came_from[current]
+            path.append(start)
+            path.reverse()
+            return path
+            
+        # Get neighbors
+        neighbors = []
+        for direction in [(1, -1, 0), (1, 0, -1), (0, 1, -1), 
+                         (-1, 1, 0), (-1, 0, 1), (0, -1, 1)]:
+            neighbor = (current[0] + direction[0], 
+                       current[1] + direction[1], 
+                       current[2] + direction[2])
+            
+            # Check if neighbor is valid and not an obstacle
+            if (neighbor in game_map.hex_map and 
+                game_map.hex_map[neighbor].get("tile") != "obstacle"):
+                neighbors.append(neighbor)
+        
+        for neighbor in neighbors:
+            # Calculate tentative g score
+            tentative_g_score = g_score[current] + 1
+            
+            # Adjust cost based on known traps and rewards
+            if neighbor in known_traps:
+                tentative_g_score += 5  # High cost for known traps
+            elif neighbor in known_rewards:
+                tentative_g_score -= 2  # Lower cost for known rewards
+            elif neighbor in known_treasures:
+                tentative_g_score -= 3  # Even lower cost for known treasures
+            
+            if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
+                # This path is better than any previous one
+                came_from[neighbor] = current
+                g_score[neighbor] = tentative_g_score
+                f_score[neighbor] = tentative_g_score + calculate_heuristic(neighbor, goal)
+                
+                if neighbor not in open_set_hash:
+                    open_set.put((f_score[neighbor], neighbor))
+                    open_set_hash.add(neighbor)
+    
+    return None  # No path found
+
+def find_path(game_map: Map, start: Tuple[int, int, int], goal: Tuple[int, int, int], known_traps=None, known_rewards=None, known_treasures=None) -> List[Tuple[int, int, int]]:
+    """
+    Find a path from start to goal using A* search.
+    
+    Args:
+        game_map: Map object containing the game state
+        start: Starting position (q, r, s)
+        goal: Goal position (q, r, s)
+        known_traps: Set of known trap coordinates
+        known_rewards: Set of known reward coordinates
+        known_treasures: Set of known treasure coordinates
+    
+    Returns:
+        List of positions forming the path from start to goal, or None if no path exists
+    """
+    return a_star_search(game_map, start, goal, known_traps, known_rewards, known_treasures) 
