@@ -734,13 +734,22 @@ def calcShortest(pos1: tuple[int, int, int], pos2: tuple[int, int, int]) -> floa
 def calcHscore(plyr: Player):
     hscore = 0
     treasures = []
+    rewards = []
     tileStatus = plyr.tileStatus
     for tile in tileStatus:
         if (tile.trap_type == TileType.TREASURE) & tile.active:
             treasures.append(tile)
+        elif ((tile.trap_type == TileType.REWARD1)  & tile.active  or (tile.trap_type == TileType.REWARD2) & tile.active):
+            rewards.append(tile)
     for treasure in treasures:
-        hscore += calcShortest(plyr.getPosition(), treasure.coordinate)
+        hscore += calcShortest(plyr.getPosition(), treasure.coordinate) 
+    for reward in rewards:
+        hscore *= calcRewardDistance(plyr.getPosition(), reward.coordinate)
+    
     return hscore * plyr.getEnergyCost() * plyr.getStepCost()
+
+def calcRewardDistance(pos1: tuple[int, int, int], pos2: tuple[int, int, int]) -> float:
+    return (abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1]) + abs(pos1[2] - pos2[2])) / 2
 
 def calcFScore(player: Player):
     if player.canCollectTreasure == False: 
