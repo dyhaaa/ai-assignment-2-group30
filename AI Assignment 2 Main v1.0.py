@@ -1,6 +1,6 @@
 from copy import deepcopy
 from enum import Enum
-import pygame
+import pygame  # Need to 'pip install pygame' on system for ui
 import math
 
 # Cube direction vectors, used in calculating the movement coordinates.
