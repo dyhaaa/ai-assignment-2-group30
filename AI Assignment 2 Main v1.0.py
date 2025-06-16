@@ -163,15 +163,32 @@ class Player:
         self.energy += self.energyCost
 
     # Testing the functionality of history
-    def trap3(self):
-        if len(self.history) >= 2:
-            self.position = self.history[-2]
-            self.history = self.history[:-2]
-        elif len(self.history) == 1:
-            self.position = self.history[-1]
-            self.history = self.history[:-1]
-        else:
-            print("No history to go back.")
+     def trap3(self):
+        if len(self.history) < 2:
+            print("Not enough history to push back.")
+            return
+
+        prev = self.history[-2]  # 2nd last
+        curr = self.history[-1]  # last move before current trap tile
+
+        # Determine direction of last movement
+        dq = curr.q - prev.q
+        dr = curr.r - prev.r
+        ds = curr.s - prev.s
+
+        # Push backward from current tile
+        new_q = self.position.q - 2 * dq
+        new_r = self.position.r - 2 * dr
+        new_s = self.position.s - 2 * ds
+
+        if new_q + new_r + new_s != 0:
+            print("Invalid push-back position!")
+            return
+
+        print(f"Trap3 activated! Moving back from {self.position} to ({new_q}, {new_r}, {new_s})")
+        self.history.append(self.position)
+        self.position = Position(new_q, new_r, new_s)
+
 
     # Method for Collecting Treasure Also used to Checking Treasure
     def collectTreasure(self):
