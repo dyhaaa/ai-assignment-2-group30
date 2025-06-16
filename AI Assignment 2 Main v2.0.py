@@ -52,7 +52,7 @@ class TrapOrReward:
             player.trap3()  # Uses Adams Trap
 
         elif self.trap_type == TileType.TRAP4:
-            self.CanCollectTreasure = False
+            player.toggleTreasure()
 
         elif self.trap_type == TileType.REWARD1:
             player.setEnergyCost(player.getEnergyCost() / 2)
@@ -69,7 +69,7 @@ class TrapOrReward:
 class Player:
 
     def __init__(self, history: list[tuple[int, int, int]], position: tuple[int, int, int], tileStatus: list[TrapOrReward], treasure: int, step: int, energy: int,
-                 stepCost: int, energyCost: int):
+                 stepCost: int, energyCost: int, canCollectTreasure: bool = True):
         self.history = history
         self.position = position
         self.tileStatus = tileStatus
@@ -78,7 +78,7 @@ class Player:
         self.energy = energy
         self.stepCost = stepCost
         self.energyCost = energyCost
-        self.canCollectTreasure = True  # Added by Karl Need this for Trap 4
+        self.canCollectTreasure = canCollectTreasure  # Added by Karl Need this for Trap 4
 
     # toString method
     def __str__(self):
@@ -87,7 +87,7 @@ class Player:
         for pos in self.history:
             posstr += (f"\n{num}." + str(pos))
             num += 1
-        return f"History: {posstr}\nCurrent Pos:{self.position}\nSteps:{self.step}, Energy:{self.energy}\nSteps Cost:{self.stepCost}, Energy Cost:{self.energyCost}\nTreasure:{self.treasure}\n"
+        return f"History: {posstr}\nCurrent Pos:{self.position}\nSteps:{self.step}, Energy:{self.energy}\nSteps Cost:{self.stepCost}, Energy Cost:{self.energyCost}\nTreasure:{self.treasure}\nCan Collect Treasure:{self.canCollectTreasure}\n"
 
     # Setters and Getters
     def getHistory(self):
@@ -149,7 +149,10 @@ class Player:
         for tile in self.tileStatus:
             if tile.coordinate == target:
                 tile.apply(self)
-                
+    
+    def toggleTreasure(self):
+            self.canCollectTreasure = False
+
      # Testing the functionality of history
 
     def trap3(self):
@@ -700,8 +703,8 @@ if __name__ == "__main__":
 """
 
 startingTiles = []
-tileCoords = [Map.Trap1_Coords, Map.Trap2_Coords, Map.Trap1_Coords,
-              Map.Trap2_Coords, Map.Reward1_Coords, Map.Reward2_Coords, Map.Treasure_Coords]
+tileCoords = [Map.Trap1_Coords, Map.Trap2_Coords, Map.Trap3_Coords,
+              Map.Trap4_Coords, Map.Reward1_Coords, Map.Reward2_Coords, Map.Treasure_Coords]
 tileTypes = [TileType.TRAP1, TileType.TRAP2, TileType.TRAP3,
              TileType.TRAP4, TileType.REWARD1, TileType.REWARD2, TileType.TREASURE]
 
@@ -723,11 +726,11 @@ def calcHscore(plyr: Player):
             treasures.append(tile)
     for treasure in treasures:
         hscore += calcShortest(plyr.getPosition(), treasure.coordinate)
-    if not plyr.canCollectTreasure: 
-        return math.inf
     return hscore * plyr.getEnergyCost() * plyr.getStepCost()
 
 def calcFScore(player: Player):
+    if player.canCollectTreasure == False: 
+        return math.inf
     gfunc = player.energy
     hfunc = calcHscore(player)
     
@@ -755,7 +758,7 @@ while len(pioneers) != 0:
             for tile in child.tileStatus:
                 if tile.coordinate == path:
                     tile.apply(child)
-        if optimal >= calcFScore(child):
+        if optimal > calcFScore(child):
             children.append(child)
     del pioneers[0]
             
@@ -771,7 +774,7 @@ while len(pioneers) != 0:
 
     #Cull Pioneers
     for plyr in pioneers:
-        if optimal <= calcFScore(plyr):
+        if optimal < calcFScore(plyr):
             if plyr in pioneers:
                 pioneers.remove(plyr)
 
