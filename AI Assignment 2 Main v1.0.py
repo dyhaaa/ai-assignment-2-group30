@@ -549,7 +549,7 @@ def make_special_hexagons(map):
         (map.Obstacle_Coords, (100, 100, 100), None,
          'Impassable obstacle. A random giant boulder that just happens to be here.'),
         (map.Trap1_Coords, (200, 150, 255), '⊖',
-         'This trap will increase the gravity of the world. \nEvery step you take will \nconsume double the energy as previous.'),
+         'This trap will increase the gravity of the world. Every step you take will consume double the energy as previous.'),
         (map.Trap2_Coords, (200, 150, 255), '⊕',
          'This trap will decrease your speed. You will take double the steps to move to the adjacent cell.'),
         (map.Trap3_Coords, (200, 150, 255), '⊗',
