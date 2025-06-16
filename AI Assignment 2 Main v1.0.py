@@ -24,6 +24,10 @@ class Position:
 
     def __str__(self):
         return f"[{self.q}, {self.r}, {self.s}]"
+    
+    def equal(self, eq: tuple[int, int, int]):
+        x, y, z = eq
+        return (self.q == x & self.r == y & self.s == z)
 
 
 class TileType(Enum):
@@ -43,7 +47,10 @@ class TrapOrReward:
         self.coordinate = coordinate  # Coords from the Map
         self.trap_type = trap_type  # 'Trap1', 'Trap2', etc.
         self.active = active  # Setting to Activate trap
-
+    
+    def __str__(self):
+        return f"{self.coordinate}: {self.trap_type.name}"
+        
     # Check to Apply the actual trap to the player
     def apply(self, player):
         if not self.active:
@@ -176,7 +183,51 @@ class Player:
 
 
 class Map:
+    
+    # A tuple containing coordinates for all existing special hexagons (obstacles, traps, rewards, treasures) on the map
+    Obstacle_Coords = (
+        (0, 3, -3),
+        (2, 1, -3),
+        (3, 1, -4),
+        (4, 0, -4),
+        (4, 2, -6),
+        (6, 1, -7),
+        (6, 0, -6),
+        (7, 0, -7),
+        (8, -3, -5)
+    )
 
+    Trap1_Coords = (
+        # Need to leave the comma for it to be tuple of tuple, for the listing to work properly for the coordinate instead of being split up
+        (8, -2, -6),
+    )
+    Trap2_Coords = (
+        (1, 0, -1),
+        (2, 3, -5)
+    )
+    Trap3_Coords = (
+        (6, -2, -4),
+        (5, 0, -5)
+    )
+    Trap4_Coords = (
+        # Need to leave the comma for it to be tuple of tuple, for the listing to work properly for the coordinate instead of being split up
+        (3, -1, -2),
+    )
+    Reward1_Coords = (
+        (4, -2, -2),
+        (1, 2, -3)
+    )
+    Reward2_Coords = (
+        (5, 2, -7),
+        (7, -2, -5)
+    )
+    Treasure_Coords = (
+        (4, -1, -3),
+        (7, -1, -6),
+        (9, -2, -7),
+        (3, 2, -5)
+    )
+    
     def __init__(self):
         # Main map variable. Stores all the hexagon tiles' coordinates
         self.hex_map = {}
@@ -187,50 +238,6 @@ class Map:
 
         # When initialized, we automatically generate an empty map
         self.generate_empty_map()
-
-        # A tuple containing coordinates for all existing special hexagons (obstacles, traps, rewards, treasures) on the map
-        self.Obstacle_Coords = (
-            (0, 3, -3),
-            (2, 1, -3),
-            (3, 1, -4),
-            (4, 0, -4),
-            (4, 2, -6),
-            (6, 1, -7),
-            (6, 0, -6),
-            (7, 0, -7),
-            (8, -3, -5)
-        )
-
-        self.Trap1_Coords = (
-            # Need to leave the comma for it to be tuple of tuple, for the listing to work properly for the coordinate instead of being split up
-            (8, -2, -6),
-        )
-        self.Trap2_Coords = (
-            (1, 0, -1),
-            (2, 3, -5)
-        )
-        self.Trap3_Coords = (
-            (6, -2, -4),
-            (5, 0, -5)
-        )
-        self.Trap4_Coords = (
-            # Need to leave the comma for it to be tuple of tuple, for the listing to work properly for the coordinate instead of being split up
-            (3, -1, -2),
-        )
-        self.Reward1_Coords = (
-            (4, -2, -2),
-            (1, 2, -3)
-        )
-        self.Reward2_Coords = (
-            (5, 2, -7),
-            (7, -2, -5)
-        )
-        self.Treasure_Coords = (
-            (4, -1, -3),
-            (7, -1, -6),
-            (9, -2, -7),
-            (3, 2, -5)
-        )
 
         # We fill in the special hexagons inside the empty map
         self.fill_map(self.Obstacle_Coords, TileType.OBSTACLE)
@@ -560,3 +567,13 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+startingTiles = []
+tileCoords = [Map.Trap1_Coords, Map.Trap2_Coords, Map.Trap1_Coords, Map.Trap2_Coords, Map.Reward1_Coords, Map.Reward2_Coords, Map.Treasure_Coords]
+tileTypes = [TileType.TRAP1, TileType.TRAP2, TileType.TRAP3, TileType.TRAP4, TileType.REWARD1, TileType.REWARD2, TileType.TREASURE]
+
+for i in range(len(tileTypes)):
+    for q, r, s in tileCoords[i]:
+        startingTiles.append(TrapOrReward(Position(q, r, s), tileTypes[i]))
+        
+STARTING_PLAYER = Player([], Position(0, 0, 0), startingTiles, 0, 0, 0, 1, 2) #Change this to modify initial values
