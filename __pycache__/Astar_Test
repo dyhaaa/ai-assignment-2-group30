@@ -1,0 +1,54 @@
+from Map_Generation import Map
+from Astar_Algorithm import find_path
+
+def test_astar():
+    # Create a map
+    game_map = Map()
+    
+    # Define start and goal positions
+    start = (0, 0, 0)  # Entry point
+    goal = (8, -3, -5)  # Far corner
+    
+    # Initialize sets to track discovered items
+    known_traps = set()
+    known_rewards = set()
+    known_treasures = set()
+    attempt = 1
+    treasures_goal = 4  # There are 4 treasures in the map that we need to find
+    
+    while len(known_treasures) < treasures_goal:
+        print(f"\nAttempt {attempt}:")
+        print(f"Known traps: {len(known_traps)}")
+        print(f"Known rewards: {len(known_rewards)}")
+        print(f"Known treasures: {len(known_treasures)}")
+        
+        # Find path
+        path = find_path(game_map, start, goal, known_traps, known_rewards, known_treasures)
+        
+        if path:
+            print(f"\nPath found with length {len(path)}:")
+            for pos in path:
+                tile_type = game_map.hex_map[pos].get("tile", "empty")
+                print(f"Position {pos}: {tile_type}")
+                
+                # Update known items
+                if tile_type == "trap":
+                    known_traps.add(pos)
+                elif tile_type == "reward":
+                    known_rewards.add(pos)
+                elif tile_type == "treasure":
+                    known_treasures.add(pos)
+        else:
+            print("No path found!")
+            break
+            
+        attempt += 1
+    
+    print("\nFinal Results:")
+    print(f"Total attempts: {attempt}")
+    print(f"Traps discovered: {len(known_traps)}")
+    print(f"Rewards discovered: {len(known_rewards)}")
+    print(f"Treasures discovered: {len(known_treasures)}")
+
+if __name__ == "__main__":
+    test_astar() 
