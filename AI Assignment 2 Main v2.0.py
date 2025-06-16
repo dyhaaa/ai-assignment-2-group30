@@ -49,7 +49,7 @@ class TrapOrReward:
             player.setStepCost(player.getStepCost() * 2)
 
         elif self.trap_type == TileType.TRAP3:
-            player.trap3()  # Uses Adams Trap
+            player.trap3(new_map)  # Uses Adams Trap
 
         elif self.trap_type == TileType.TRAP4:
             player.toggleTreasure()
@@ -155,15 +155,15 @@ class Player:
 
      # Testing the functionality of history
 
-    def trap3(self):
+    def trap3(self, mp):
         curQ, curR, curS = self.position
-        q, r, s = self.history[-2]
-        x, y, z = self.history[-1]
+        q, r, s = self.history[-1]
+        
 
         # Determine direction of last movement
-        dq = x - q
-        dr = y - r
-        ds = z - s
+        dq = curQ - q
+        dr = curR - r
+        ds = curS - s
 
         # Push backward from current tile
         new_q = curQ - 2 * dq
@@ -173,11 +173,25 @@ class Player:
         if new_q + new_r + new_s != 0:
             print("Invalid push-back position!")
             return
-
-        print(f"Trap3 activated! Moving back from {self.position} to ({new_q}, {new_r}, {new_s})")
-        self.history.append(self.position)
-        self.position = new_q, new_r, new_s
-
+        if (new_q, new_r, new_s) in mp.hex_map:
+            if mp.hex_map[(new_q, new_r, new_s)] != TileType.OBSTACLE:
+                print(f"Trap3 activated! Moving back from {self.position} to ({new_q}, {new_r}, {new_s})")
+                self.history.append(self.position)
+                self.position = (new_q, new_r, new_s)
+                for tile in self.tileStatus:
+                    if tile.coordinate == (new_q, new_r, new_s):
+                        tile.apply(self)
+                return
+        if (new_q + dq, new_r + dr, new_s + ds) in mp.hex_map:
+            if mp.hex_map[(new_q + dq, new_r + dr, new_s + ds)] != TileType.OBSTACLE:
+                print(f"Trap3 activated! Moving back from {self.position} to ({new_q}, {new_r}, {new_s})")
+                self.history.append(self.position)
+                self.position = (new_q + dq, new_r + dr, new_s + ds)
+                for tile in self.tileStatus:
+                    if tile.coordinate == (new_q + dq, new_r + dr, new_s + ds):
+                        tile.apply(self)
+            else:
+                return
     # Method for Collecting Treasure Also used to Checking Treasure
     def collectTreasure(self):
         # If Trap 4 hasnt been hit use this
@@ -781,7 +795,6 @@ while len(pioneers) != 0:
     #Sort
     pioneers.sort(key= lambda x: calcFScore(x), reverse=False)
     if len(pioneers) != 0:
-        print(pioneers[0])
         print(calcFScore(pioneers[0]))
         print(len(pioneers))
         print(optimal)
