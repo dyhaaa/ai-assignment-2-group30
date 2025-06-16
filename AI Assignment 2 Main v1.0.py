@@ -512,6 +512,7 @@ def draw_map(hex_map, special_hexagons=None, radius=HEX_RADIUS, offset_x=0, offs
         special = next(
             (hex for hex in special_hexagons if hex['coord'] == coord), None)
 
+        # Build tile and append to list of hexes
         tile = HexagonTile(
             x, y, radius,
             colour=special['colour'] if special else HEX_DEFAULT_COLOUR,
@@ -603,6 +604,7 @@ def draw_popup(screen, cursor_pos, selected_hex, font):
 
 
 def main():
+    # Initialise screen for display
     pygame.init()
     screen = pygame.display.set_mode((1000, 800), pygame.RESIZABLE)
     pygame.display.set_caption("Treasure Hunt In a Virtual World")
@@ -641,11 +643,15 @@ def main():
         # Check if hovering over special hexagon
         for hex_tile in hex_tiles:
             for hex_info in special_hexagons:
+                # Get cube coordinates
                 q, r, s = hex_info['coord']
+                # Convert cube coordinates to screen coordinates
                 x, y = cube_to_screen(
                     q, r, HEX_RADIUS, offset_x=map_offset_x, offset_y=map_offset_y)
+                # Check if mouse over special hexagon, if so then highlight hexagon tile
                 if is_cursor_in_hex(cursor_pos[0], cursor_pos[1], hex_tile.x, hex_tile.y, hex_tile.radius) and (hex_tile.x, hex_tile.y) == (x, y):
                     hex_tile.highlight_hex(screen, (255, 255, 255), 3)
+                    # Check if hexagon clicked, if so then show popup
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         selected_hex = hex_info
                         show_popup = True
@@ -656,13 +662,16 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
+            # Check if holding left mouse button (event.button == 1)
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 dragging = True
                 drag_start_pos = pygame.mouse.get_pos()
 
+            # Check if released left mouse button
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 dragging = False
 
+            # While holding down left mouse button and moving mouse
             elif event.type == pygame.MOUSEMOTION and dragging:
                 mouse_x, mouse_y = pygame.mouse.get_pos()
                 dx = mouse_x - drag_start_pos[0]
