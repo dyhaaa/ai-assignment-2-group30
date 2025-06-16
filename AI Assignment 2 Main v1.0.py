@@ -16,6 +16,7 @@ direction = {
 
 }
 
+
 class Position:
     def __init__(self, q, r, s):
         self.q = q
@@ -24,7 +25,7 @@ class Position:
 
     def __str__(self):
         return f"[{self.q}, {self.r}, {self.s}]"
-    
+
     def equal(self, eq: tuple[int, int, int]):
         x, y, z = eq
         return (self.q == x & self.r == y & self.s == z)
@@ -47,10 +48,10 @@ class TrapOrReward:
         self.coordinate = coordinate  # Coords from the Map
         self.trap_type = trap_type  # 'Trap1', 'Trap2', etc.
         self.active = active  # Setting to Activate trap
-    
+
     def __str__(self):
         return f"{self.coordinate}: {self.trap_type.name}"
-        
+
     # Check to Apply the actual trap to the player
     def apply(self, player):
         if not self.active:
@@ -183,7 +184,7 @@ class Player:
 
 
 class Map:
-    
+
     # A tuple containing coordinates for all existing special hexagons (obstacles, traps, rewards, treasures) on the map
     Obstacle_Coords = (
         (0, 3, -3),
@@ -227,7 +228,7 @@ class Map:
         (9, -2, -7),
         (3, 2, -5)
     )
-    
+
     def __init__(self):
         # Main map variable. Stores all the hexagon tiles' coordinates
         self.hex_map = {}
@@ -292,7 +293,8 @@ class Map:
             # Generate 9 rows. We don't generate 10 rows because we already have the starting column added
             for row in range(9):
                 # Generating coordinates for the next tile in the row
-                next_row_tile = self.add_new_tile_coords(current_row_tile, direction[self.NE_SE_cycle[0]])
+                next_row_tile = self.add_new_tile_coords(
+                    current_row_tile, direction[self.NE_SE_cycle[0]])
                 # Add the new tile into the dictionary and declaring the tile empty
                 self.hex_map[next_row_tile] = TileType.EMPTY
                 # Set the current row as the next one so we can continuously go down the row
@@ -301,7 +303,8 @@ class Map:
                 self.swap_direction(self.NE_SE_cycle)
 
             # After generating the row, we update the column to move to the next one
-            next_col = self.add_new_tile_coords(current_col_tile, direction["down"])
+            next_col = self.add_new_tile_coords(
+                current_col_tile, direction["down"])
             current_col_tile = next_col  # Move the current column to the next one
             current_row_tile = next_col  # Reset the current row to go to the next column
 
@@ -316,30 +319,38 @@ class Map:
 
     # A function to return a list of valid coordinates the player can go to
     # Parameter meaning: cur_pos is current_position of the player, takes in the current tile coordinate the player is in
-    def check_valid_tiles(self, cur_pos : tuple) -> list[tuple]:
+    def check_valid_tiles(self, cur_pos: tuple) -> list[tuple]:
         # Checking to see if the coordinates passed into the argument exists in the map
         # if it doesn't, we throw an exception error message
-        if(cur_pos not in self.hex_map):
-            raise Exception(f"The position: {cur_pos}, is invalid. Cannot be found in the map.")
+        if (cur_pos not in self.hex_map):
+            raise Exception(
+                f"The position: {cur_pos}, is invalid. Cannot be found in the map.")
         else:
             # List that will hold all the valid tiles the player can move to
             valid_tiles = []
-            
+
             # Dictionary that contains all hexagons that surround the player's current position
             surrounding_tiles = {}
 
             # Appending the dictionary with the surrounding tile coords
-            surrounding_tiles["up"] = self.add_new_tile_coords(cur_pos, direction['up'])
-            surrounding_tiles["down"] = self.add_new_tile_coords(cur_pos, direction['down'])
-            surrounding_tiles["NE"] = self.add_new_tile_coords(cur_pos, direction['NE'])
-            surrounding_tiles["NW"] = self.add_new_tile_coords(cur_pos, direction['NW'])
-            surrounding_tiles["SE"] = self.add_new_tile_coords(cur_pos, direction['SE'])
-            surrounding_tiles["SW"] = self.add_new_tile_coords(cur_pos, direction['SW'])
+            surrounding_tiles["up"] = self.add_new_tile_coords(
+                cur_pos, direction['up'])
+            surrounding_tiles["down"] = self.add_new_tile_coords(
+                cur_pos, direction['down'])
+            surrounding_tiles["NE"] = self.add_new_tile_coords(
+                cur_pos, direction['NE'])
+            surrounding_tiles["NW"] = self.add_new_tile_coords(
+                cur_pos, direction['NW'])
+            surrounding_tiles["SE"] = self.add_new_tile_coords(
+                cur_pos, direction['SE'])
+            surrounding_tiles["SW"] = self.add_new_tile_coords(
+                cur_pos, direction['SW'])
 
             # dictionary containing the pairing of coordinates q and r
             # Mainly used for checking the border of both top and bottom rows, excluding the columns at q = 0 and q = 9
-            top_row_pair = {1 : -1, 2 : -1, 3 : -2, 4 : -2, 5 : -3, 6 : -3, 7 : -4, 8 : -4}
-            bottom_row_pair = {1 : 4, 2 : 4, 3 : 3, 4 : 3, 5 : 2, 6 : 2, 7 : 1, 8 : 1}
+            top_row_pair = {1: -1, 2: -1, 3: -2,
+                            4: -2, 5: -3, 6: -3, 7: -4, 8: -4}
+            bottom_row_pair = {1: 4, 2: 4, 3: 3, 4: 3, 5: 2, 6: 2, 7: 1, 8: 1}
 
             # Assigning coordinate position value to respective variable
             q = cur_pos[0]
@@ -348,48 +359,48 @@ class Map:
             # Checking to see if the player's current position is in the border of the map
             # Apply necessary changes if the condition is met
             # Checking for left column excluding corners
-            if(q == 0 and (r > 0 and r < 5)):
+            if (q == 0 and (r > 0 and r < 5)):
                 surrounding_tiles.pop('NW')
                 surrounding_tiles.pop('SW')
             # Checking for right column excluding corners
-            elif(q == 9 and (r > -5 and r < 0)):
+            elif (q == 9 and (r > -5 and r < 0)):
                 surrounding_tiles.pop('NE')
                 surrounding_tiles.pop('SE')
             # Checking for NE top row
-            elif((q % 2 != 0) and (q > 0 and q < 9) and ((q in top_row_pair) and top_row_pair[q] == r)):
+            elif ((q % 2 != 0) and (q > 0 and q < 9) and ((q in top_row_pair) and top_row_pair[q] == r)):
                 surrounding_tiles.pop('up')
                 surrounding_tiles.pop('NW')
                 surrounding_tiles.pop('NE')
             # Checking for SE top row
-            elif((q % 2 == 0) and (q > 0 and q < 9) and ((q in top_row_pair) and top_row_pair[q] == r)):
+            elif ((q % 2 == 0) and (q > 0 and q < 9) and ((q in top_row_pair) and top_row_pair[q] == r)):
                 surrounding_tiles.pop('up')
             # Checking for NE bottom row
-            elif((q % 2 != 0) and (q > 0 and q < 9) and ((q in bottom_row_pair) and bottom_row_pair[q] == r)):
+            elif ((q % 2 != 0) and (q > 0 and q < 9) and ((q in bottom_row_pair) and bottom_row_pair[q] == r)):
                 surrounding_tiles.pop('down')
             # Checking for SE bottom row
-            elif((q % 2 == 0) and (q > 0 and q < 9) and ((q in bottom_row_pair) and bottom_row_pair[q] == r)):
+            elif ((q % 2 == 0) and (q > 0 and q < 9) and ((q in bottom_row_pair) and bottom_row_pair[q] == r)):
                 surrounding_tiles.pop('down')
                 surrounding_tiles.pop('SW')
                 surrounding_tiles.pop('SE')
             # Checking for top left corner
-            elif(q == 0 and r == 0):
+            elif (q == 0 and r == 0):
                 surrounding_tiles.pop('up')
                 surrounding_tiles.pop('NW')
                 surrounding_tiles.pop('SW')
             # Checking for bottom left corner
-            elif(q == 0 and r == 5):
+            elif (q == 0 and r == 5):
                 surrounding_tiles.pop('down')
                 surrounding_tiles.pop('NW')
                 surrounding_tiles.pop('SW')
                 surrounding_tiles.pop('SE')
             # Checking for top right corner
-            elif(q == 9 and r == -5):
+            elif (q == 9 and r == -5):
                 surrounding_tiles.pop('up')
                 surrounding_tiles.pop('NW')
                 surrounding_tiles.pop('NE')
                 surrounding_tiles.pop('SE')
             # Checking for bottom right corner
-            elif(q == 9 and r == 0):
+            elif (q == 9 and r == 0):
                 surrounding_tiles.pop('down')
                 surrounding_tiles.pop('SE')
                 surrounding_tiles.pop('NE')
@@ -407,7 +418,7 @@ class Map:
                 elif self.hex_map[coord] == TileType.OBSTACLE:
                     # Remove it from the list since it isn't a valid tile for the player to move into
                     surrounding_tiles.pop(tile)
-            
+
             # Finally, after filtering, we can return the list of coordinates containing coords that are valid for the player to move to
             for valid_tile_coord in surrounding_tiles.values():
                 valid_tiles.append(valid_tile_coord)
@@ -421,7 +432,7 @@ new_map = Map()
 
 print(new_map)
 print("total amount of tiles: ", len(new_map.hex_map))
-print(new_map.check_valid_tiles((0,0,0)))
+print(new_map.check_valid_tiles((0, 0, 0)))
 
 
 #
@@ -467,28 +478,35 @@ class HexagonTile:
             symbol_rect = symbol.get_rect(center=(self.x, self.y-5))
             screen.blit(symbol, symbol_rect)
 
+    def highlight_hex(self, screen, border_colour, thickness):
+        # Draw border around hexagon
+        pygame.draw.lines(screen, border_colour, closed=True,
+                          points=self.get_corners(), width=thickness)
 
-def cube_to_screen(q, r, radius, origin_x=100, origin_y=150):
+
+def cube_to_screen(q, r, radius, origin_x=100, origin_y=150, offset_x=0, offset_y=0):
     # Convert cube coordinates to screen coordinates
     # Convert cube to axial coordinates
     x = q
     y = r
 
     # Convert axial to screen coordinates
-    screen_x = x * radius * 1.67 + origin_x
-    screen_y = y * radius * 2 + (x * radius) + origin_y
+    screen_x = x * radius * 1.67 + origin_x + offset_x
+    screen_y = y * radius * 2 + (x * radius) + origin_y + offset_y
 
     return (screen_x, screen_y)
 
 
-def draw_map(hex_map, special_hexagons=None, radius=hex_radius):
+def draw_map(hex_map, special_hexagons=None, radius=hex_radius, offset_x=0, offset_y=0):
+    # Hexagons list
     hexes = []
 
-    for coord, tile_data in hex_map.items():
+    for coord, tile_data in hex_map.items():  # tile_data and s not used, but have to be unpacked
         q, r, s = coord
 
         # Convert cube coordinates to screen position
-        x, y = cube_to_screen(q, r, radius)
+        x, y = cube_to_screen(
+            q, r, radius, offset_x=offset_x, offset_y=offset_y)
 
         # Check if hexagon tile is special
         special = next(
@@ -504,50 +522,85 @@ def draw_map(hex_map, special_hexagons=None, radius=hex_radius):
     return hexes
 
 
+def is_cursor_in_hex(x, y, hex_x, hex_y, radius):
+    # Check distance
+    distance_x = x - hex_x
+    distance_y = y - hex_y
+    # Get distance of cursor from hex (triangle pythagorean theorem)
+    distance = math.sqrt(distance_x**2 + distance_y**2)
+    return distance <= radius
+
+
+def make_special_hexagons(map):
+
+    # Special hexagons list, starting with entry tile
+    special_hexagons = [
+        {
+            'coord': (0, 0, 0),
+            'colour': (0, 180, 255),
+            'icon': '↘',  # Entry tile
+            'description': 'Starting Point'
+        }
+    ]
+
+    # Add special hexagons from map
+    # List of tuples containing the coordinate list and their properties
+    coord_lists = [
+        (map.Obstacle_Coords, (100, 100, 100), None,
+         'Impassable obstacle. A random giant boulder that just happens to be here.'),
+        (map.Trap1_Coords, (200, 150, 255), '⊖',
+         'This trap will increase the gravity of the world. \nEvery step you take will \nconsume double the energy as previous.'),
+        (map.Trap2_Coords, (200, 150, 255), '⊕',
+         'This trap will decrease your speed. You will take double the steps to move to the adjacent cell.'),
+        (map.Trap3_Coords, (200, 150, 255), '⊗',
+         'This trap will move you two cells away following your last movement direction.'),
+        (map.Trap4_Coords, (200, 150, 255), '⊘',
+         'This trap will remove all treasures that have not been collected. All treasures that are collected will not be affected.'),
+        (map.Reward1_Coords, (80, 200, 170), '⊞',
+         'This reward will decrease the gravity of the world. Every step you take will consume half the energy as previous.'),
+        (map.Reward2_Coords, (80, 200, 170), '⊠',
+         'This reward will increase your speed. You will take half the steps to move to the adjacent cell.'),
+        (map.Treasure_Coords, (255, 180, 20), None,
+         'Shiny, shimmering, splendid treasure. Just holding it gives you a big dopamine boost.')
+    ]
+
+    # Single loop to process all coordinates and their properties
+    for coord_list, colour, icon, description in coord_lists:
+        for coord in coord_list:
+            special_hexagons.append({
+                'coord': coord,
+                'colour': colour,
+                'icon': icon,
+                'description': description
+            })
+
+    return special_hexagons
+
+
 def main():
     pygame.init()
     screen = pygame.display.set_mode((1000, 800), pygame.RESIZABLE)
     pygame.display.set_caption("Treasure Hunt In a Virtual World")
     text = pygame.font.Font('Arial-Unicode-MS.ttf', 50)
+    text_desc = pygame.font.Font('Arial-Unicode-MS.ttf', 20)
 
     # Initialize the map
     game_map = Map()
-
-    # Special hexagons list to be put on map, created empty
-    special_hexagons = []
-
-    # Add entry point tile
-    special_hexagons.append(
-        {
-            'coord': (0, 0, 0),
-            'colour': (0, 180, 255),
-            'icon': '↘'  # Entry tile
-        }
-    )
-
-    # Add special hexagons from map
-    # List of tuples containing the coordinate list and their properties
-    coord_lists = [
-        (game_map.Obstacle_Coords, (100, 100, 100), None),
-        (game_map.Trap1_Coords, (200, 150, 255), '⊖'),
-        (game_map.Trap2_Coords, (200, 150, 255), '⊕'),
-        (game_map.Trap3_Coords, (200, 150, 255), '⊗'),
-        (game_map.Trap4_Coords, (200, 150, 255), '⊘'),
-        (game_map.Reward1_Coords, (80, 200, 170), '⊞'),
-        (game_map.Reward2_Coords, (80, 200, 170), '⊠'),
-        (game_map.Treasure_Coords, (255, 180, 20), None)
-    ]
-
-    # Single loop to process all coordinates and their properties
-    for coord_list, colour, icon in coord_lists:
-        for coord in coord_list:
-            special_hexagons.append({
-                'coord': coord,
-                'colour': colour,
-                'icon': icon
-            })
-
+    # Make special hexagons list
+    special_hexagons = make_special_hexagons(game_map)
+    # Draw whole map
     hex_tiles = draw_map(game_map.hex_map, special_hexagons, hex_radius)
+
+    # Constants
+    # For dragging map
+    map_offset_x = 0
+    map_offset_y = 0
+    dragging = False
+    drag_start_pos = (0, 0)
+    # For hexagon highlighting, popups
+    show_popup = False
+    selected_hex = None
+    cursor_pos = (0, 0)
 
     running = True
     while running:
@@ -555,12 +608,75 @@ def main():
         for tile in hex_tiles:
             tile.draw(screen, text)
 
-        # Doesn't flip like a shape, updates the full display Surface to the screen
-        pygame.display.flip()
+        # Get cursor position
+        cursor_pos = pygame.mouse.get_pos()
+
+        # Check if hovering over special hexagon
+        for hex_tile in hex_tiles:
+            for hex_info in special_hexagons:
+                q, r, s = hex_info['coord']
+                x, y = cube_to_screen(
+                    q, r, hex_radius, offset_x=map_offset_x, offset_y=map_offset_y)
+                if is_cursor_in_hex(cursor_pos[0], cursor_pos[1], hex_tile.x, hex_tile.y, hex_tile.radius) and (hex_tile.x, hex_tile.y) == (x, y):
+                    hex_tile.highlight_hex(screen, (255, 255, 255), 3)
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        selected_hex = hex_info
+                        show_popup = True
+                    else:
+                        show_popup = False
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    dragging = True
+                    drag_start_pos = pygame.mouse.get_pos()
+
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1:
+                    dragging = False
+
+            elif event.type == pygame.MOUSEMOTION:
+                if dragging:
+                    mouse_x, mouse_y = pygame.mouse.get_pos()
+                    dx = mouse_x - drag_start_pos[0]
+                    dy = mouse_y - drag_start_pos[1]
+                    map_offset_x += dx
+                    map_offset_y += dy
+                    drag_start_pos = (mouse_x, mouse_y)
+                    # Redraw map with updated offset
+                    hex_tiles = draw_map(
+                        game_map.hex_map, special_hexagons, hex_radius, map_offset_x, map_offset_y)
+
+        # Draw popup
+        if show_popup and selected_hex:
+            # Popup position
+            popup_x = cursor_pos[0] + 10
+            popup_y = cursor_pos[1] + 10
+
+            # Popup box
+            popup_width = 300
+            popup_height = 200
+            popup_rect = pygame.Rect(
+                popup_x, popup_y, popup_width, popup_height)
+
+            # Draw background
+            pygame.draw.rect(screen, selected_hex['colour'], popup_rect)
+            # Draw border
+            pygame.draw.rect(screen, (50, 50, 50), popup_rect, 2)
+
+            # Draw description text
+            description = selected_hex['description']
+            description_surface = text_desc.render(
+                description, True, (255, 255, 255))
+            description_rect = description_surface.get_rect(
+                center=(popup_x + popup_width//2, popup_y + popup_height//2))
+            screen.blit(description_surface, description_rect)
+
+        # Doesn't flip like a shape, just updates the display
+        pygame.display.flip()
 
     pygame.quit()
 
@@ -568,12 +684,16 @@ def main():
 if __name__ == "__main__":
     main()
 
+
 startingTiles = []
-tileCoords = [Map.Trap1_Coords, Map.Trap2_Coords, Map.Trap1_Coords, Map.Trap2_Coords, Map.Reward1_Coords, Map.Reward2_Coords, Map.Treasure_Coords]
-tileTypes = [TileType.TRAP1, TileType.TRAP2, TileType.TRAP3, TileType.TRAP4, TileType.REWARD1, TileType.REWARD2, TileType.TREASURE]
+tileCoords = [Map.Trap1_Coords, Map.Trap2_Coords, Map.Trap1_Coords,
+              Map.Trap2_Coords, Map.Reward1_Coords, Map.Reward2_Coords, Map.Treasure_Coords]
+tileTypes = [TileType.TRAP1, TileType.TRAP2, TileType.TRAP3,
+             TileType.TRAP4, TileType.REWARD1, TileType.REWARD2, TileType.TREASURE]
 
 for i in range(len(tileTypes)):
     for q, r, s in tileCoords[i]:
         startingTiles.append(TrapOrReward(Position(q, r, s), tileTypes[i]))
-        
-STARTING_PLAYER = Player([], Position(0, 0, 0), startingTiles, 0, 0, 0, 1, 2) #Change this to modify initial values
+
+# Change this to modify initial values
+STARTING_PLAYER = Player([], Position(0, 0, 0), startingTiles, 0, 0, 0, 1, 2)
