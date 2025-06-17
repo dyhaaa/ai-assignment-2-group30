@@ -569,6 +569,7 @@ print(goal)
 BACKGROUND_COLOUR = (220, 220, 220)
 HEX_DEFAULT_COLOUR = (255, 255, 255)
 HEX_RADIUS = 50  # Size of hexagon
+SIMULATION_TIME_BETWEEN_STEPS = 200
 
 
 class HexagonTile:
@@ -783,7 +784,7 @@ def main():
 
         current_time = pygame.time.get_ticks()
         # Update player position according to goal history
-        if current_time - last_move_time >= 200:
+        if current_time - last_move_time >= SIMULATION_TIME_BETWEEN_STEPS:
             if history_index < len(goal_history):
                 current_pos = goal_history[history_index]
                 x, y = cube_to_screen(
@@ -848,6 +849,8 @@ def main():
 
         # Doesn't flip like a shape, just updates the display
         pygame.display.flip()
+
+    pygame.quit()
 
 
 main()
