@@ -803,7 +803,7 @@ def main():
             # Remove special hexagon if player is on it (basically removed after reached)
             for hex_info in special_hexagons:
                 q, r, s = hex_info['coord']
-                if (q, r, s) == current_pos:
+                if (q, r, s) == current_pos and (q, r, s) != (0, 0, 0):
                     special_hexagons.remove(hex_info)
 
         # Draw player icon
