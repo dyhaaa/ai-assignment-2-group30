@@ -597,7 +597,7 @@ SCREEN_SIZE = (1200, 800)
 BACKGROUND_COLOUR = (220, 220, 220)
 HEX_DEFAULT_COLOUR = (255, 255, 255)
 HEX_RADIUS = 50  # Size of hexagon
-SIMULATION_TIME_BETWEEN_STEPS = [  # To adjust simulation speed
+SIMULATION_TIME_BETWEEN_MOVES = [  # To adjust simulation speed
     (300, 'Slow'),
     (150, 'Normal'),
     (50, 'Fast')
@@ -845,17 +845,18 @@ def main():
     # For player icon
     last_move_time = 0
     history_index = 0
+    visited_coords = []
 
     # For simulation speed
     speed_index = 1  # Normal speed
-    speed = SIMULATION_TIME_BETWEEN_STEPS
+    speed = SIMULATION_TIME_BETWEEN_MOVES
     current_speed = speed[speed_index][0]
 
     # Initialize player icon
     goal_history = goal.getHistory()
     current_pos = goal_history[0]
     x, y = cube_to_screen(current_pos[0], current_pos[1], HEX_RADIUS)
-    player_icon = PlayerIcon(x, y)
+    player_icon = PlayerIcon(x, y, colour=(255, 0, 0))
 
     # Create play/reset button
     play_button = Button(950, 100, 150, 100, "PLAY", font_button, colour=(
@@ -885,6 +886,7 @@ def main():
         if sim_running:
 
             # Update player position according to goal history
+            # Wait until time between previous move and current move are equal to set time between moves
             if current_time - last_move_time >= current_speed:
 
                 # For positions before last position
@@ -894,6 +896,12 @@ def main():
                         current_pos[0], current_pos[1], HEX_RADIUS, 100, 150)  # map offsets
                     player_icon.x = x
                     player_icon.y = y
+
+                    # Add coordinate to visited coords
+                    visited_coords.append(PlayerIcon(
+                        x, y, colour=(200, 150, 150)))
+
+                    # Increase index to get next position
                     history_index += 1
                     last_move_time = current_time
 
@@ -914,6 +922,10 @@ def main():
                     q, r, s = hex_info['coord']
                     if (q, r, s) == current_pos and (q, r, s) != (0, 0, 0):
                         special_hexagons.remove(hex_info)
+
+        # Draw old player icon on visited coordinates
+        for coord in visited_coords:
+            coord.draw(screen)
 
         # Draw player icon
         player_icon.draw(screen)
@@ -958,8 +970,9 @@ def main():
 
                 if sim_running:
                     # Reset simulation
-                    history_index = 0
                     last_move_time = 0
+                    history_index = 0
+                    visited_coords = []
                     current_pos = goal_history[0]
                     x, y = cube_to_screen(
                         current_pos[0], current_pos[1], HEX_RADIUS, 100, 150)
@@ -972,7 +985,6 @@ def main():
                     play_button.text = "PLAY"
                     play_button.colour = (100, 200, 0)
                     play_button.hover_colour = (0, 255, 0)
-                    print(sim_running)
 
                 else:
                     # Start simulation
@@ -982,7 +994,6 @@ def main():
                     play_button.text = "RESET"
                     play_button.colour = (150, 50, 0)
                     play_button.hover_colour = (255, 80, 0)
-                    print(sim_running)
 
             # Check if pressed left mouse button (event.button == 1)
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
