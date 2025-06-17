@@ -16,6 +16,7 @@ direction = {
 
 }
 
+
 class TileType(Enum):
     EMPTY = 1
     OBSTACLE = 2
@@ -78,7 +79,8 @@ class Player:
         self.energy = energy
         self.stepCost = stepCost
         self.energyCost = energyCost
-        self.canCollectTreasure = canCollectTreasure  # Added by Karl Need this for Trap 4
+        # Added by Karl Need this for Trap 4
+        self.canCollectTreasure = canCollectTreasure
 
     # toString method
     def __str__(self):
@@ -149,16 +151,15 @@ class Player:
         for tile in self.tileStatus:
             if tile.coordinate == target:
                 tile.apply(self)
-    
-    def toggleTreasure(self):
-            self.canCollectTreasure = False
 
-     # Testing the functionality of history
+    def toggleTreasure(self):
+        self.canCollectTreasure = False
+
+ # Testing the functionality of history
 
     def trap3(self, mp):
         curQ, curR, curS = self.position
         q, r, s = self.history[-1]
-        
 
         # Determine direction of last movement
         dq = curQ - q
@@ -175,7 +176,8 @@ class Player:
             return
         if (new_q, new_r, new_s) in mp.hex_map:
             if mp.hex_map[(new_q, new_r, new_s)] != TileType.OBSTACLE:
-                print(f"Trap3 activated! Moving back from {self.position} to ({new_q}, {new_r}, {new_s})")
+                print(
+                    f"Trap3 activated! Moving back from {self.position} to ({new_q}, {new_r}, {new_s})")
                 self.history.append(self.position)
                 self.position = (new_q, new_r, new_s)
                 for tile in self.tileStatus:
@@ -184,7 +186,8 @@ class Player:
                 return
         if (new_q + dq, new_r + dr, new_s + ds) in mp.hex_map:
             if mp.hex_map[(new_q + dq, new_r + dr, new_s + ds)] != TileType.OBSTACLE:
-                print(f"Trap3 activated! Moving back from {self.position} to ({new_q}, {new_r}, {new_s})")
+                print(
+                    f"Trap3 activated! Moving back from {self.position} to ({new_q}, {new_r}, {new_s})")
                 self.history.append(self.position)
                 self.position = (new_q + dq, new_r + dr, new_s + ds)
                 for tile in self.tileStatus:
@@ -193,6 +196,7 @@ class Player:
             else:
                 return
     # Method for Collecting Treasure Also used to Checking Treasure
+
     def collectTreasure(self):
         # If Trap 4 hasnt been hit use this
         if self.canCollectTreasure:
@@ -454,12 +458,114 @@ print("total amount of tiles: ", len(new_map.hex_map))
 print(new_map.check_valid_tiles((0, 0, 0)))
 
 
+startingTiles = []
+tileCoords = [Map.Trap1_Coords, Map.Trap2_Coords, Map.Trap3_Coords,
+              Map.Trap4_Coords, Map.Reward1_Coords, Map.Reward2_Coords, Map.Treasure_Coords]
+tileTypes = [TileType.TRAP1, TileType.TRAP2, TileType.TRAP3,
+             TileType.TRAP4, TileType.REWARD1, TileType.REWARD2, TileType.TREASURE]
+
+for i in range(len(tileTypes)):
+    for q, r, s in tileCoords[i]:
+        startingTiles.append(TrapOrReward((q, r, s), tileTypes[i]))
+
+
+def calcShortest(pos1: tuple[int, int, int], pos2: tuple[int, int, int]) -> float:
+
+    # Calculate the Manhattan distance between two positions in the hexagonal grid
+    return (abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1]) + abs(pos1[2] - pos2[2])) / 2
+
+
+def calcHscore(plyr: Player):
+    hscore = 0
+    treasures = []
+    rewards = []
+    tileStatus = plyr.tileStatus
+    for tile in tileStatus:
+        if (tile.trap_type == TileType.TREASURE) & tile.active:
+            treasures.append(tile)
+        elif ((tile.trap_type == TileType.REWARD1) & tile.active or (tile.trap_type == TileType.REWARD2) & tile.active):
+            rewards.append(tile)
+    for treasure in treasures:
+        hscore += calcShortest(plyr.getPosition(), treasure.coordinate)
+    for reward in rewards:
+        rScore = 0
+        for treasure in treasures:
+            rScore += calcShortest(reward.coordinate, treasure.coordinate)
+        hscore += calcShortest(plyr.getPosition(),
+                               reward.coordinate) * rScore / 2
+
+    return (hscore * plyr.getEnergyCost() * plyr.getStepCost())
+
+
+def calcRewardDistance(pos1: tuple[int, int, int], pos2: tuple[int, int, int]) -> float:
+    return (abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1]) + abs(pos1[2] - pos2[2])) / 2
+
+
+def calcFScore(player: Player):
+    if player.canCollectTreasure == False:
+        return math.inf
+    gfunc = player.energy
+    hfunc = calcHscore(player)
+
+    return gfunc + hfunc
+
+
+# Change this to modify initial values
+STARTING_PLAYER = Player([], (0, 0, 0), startingTiles, 0, 0, 0, 1, 2)
+
+
+pioneers = []
+pioneers.append(STARTING_PLAYER)
+optimal = math.inf
+
+
+while len(pioneers) != 0:
+
+    # Populate
+    lead = pioneers[0]  # Take the least fscore
+    children = []
+    for path in new_map.check_valid_tiles(lead.position):
+        child = deepcopy(lead)
+        child.moveTile(path)
+        if new_map.hex_map[path] != TileType.EMPTY:
+            for tile in child.tileStatus:
+                if tile.coordinate == path:
+                    tile.apply(child)
+        if optimal > calcFScore(child):
+            children.append(child)
+    del pioneers[0]
+
+    # Goal Test
+    for candidate in children:
+        if candidate.treasure == 4:
+            if calcFScore(candidate) < optimal:
+                optimal = calcFScore(candidate)
+                goal = deepcopy(candidate)
+            del candidate
+        else:
+            pioneers.append(candidate)
+
+    # Cull Pioneers
+    for plyr in pioneers:
+        if optimal < calcFScore(plyr):
+            if plyr in pioneers:
+                pioneers.remove(plyr)
+
+    # Sort
+    pioneers.sort(key=lambda x: calcFScore(x), reverse=False)
+    if len(pioneers) != 0:
+        print(calcFScore(pioneers[0]))
+        print(len(pioneers))
+        print(optimal)
+
+print(goal)
+
 #
 #
 #
 # MAP UI
 # Constant variables
-"""
+
 BACKGROUND_COLOUR = (220, 220, 220)
 HEX_DEFAULT_COLOUR = (255, 255, 255)
 HEX_RADIUS = 50  # Size of hexagon
@@ -501,6 +607,18 @@ class HexagonTile:
         # Draw border around hexagon
         pygame.draw.lines(screen, border_colour, closed=True,
                           points=self.get_corners(), width=thickness)
+
+
+class PlayerIcon:
+    def __init__(self, x, y, radius=10, color=(255, 0, 0)):
+        self.x = x
+        self.y = y
+        self.radius = radius
+        self.color = color
+
+    def draw(self, screen):
+        pygame.draw.circle(screen, self.color,
+                           (int(self.x), int(self.y)), self.radius)
 
 
 def cube_to_screen(q, r, radius, origin_x=100, origin_y=150, offset_x=0, offset_y=0):
@@ -559,7 +677,7 @@ def make_special_hexagons(map):
             'coord': (0, 0, 0),
             'colour': (0, 180, 255),
             'icon': '↘',  # Entry tile
-            'description': 'Starting Point'
+            'description': 'Starting point.'
         }
     ]
 
@@ -567,21 +685,21 @@ def make_special_hexagons(map):
     # List of tuples containing the coordinate list and their properties
     coord_lists = [
         (map.Obstacle_Coords, (100, 100, 100), None,
-         'Impassable obstacle. A random giant boulder that just happens to be here.'),
+         'Obstacle. A big, annoying boulder.'),
         (map.Trap1_Coords, (200, 150, 255), '⊖',
-         'This trap will increase the gravity of the world. Every step you take will consume double the energy as previous.'),
+         'TRAP 1: Every step consumes 2x energy as previous.'),
         (map.Trap2_Coords, (200, 150, 255), '⊕',
-         'This trap will decrease your speed. You will take double the steps to move to the adjacent cell.'),
+         'TRAP 2: Moving to adjacent cell takes 2x steps.'),
         (map.Trap3_Coords, (200, 150, 255), '⊗',
-         'This trap will move you two cells away following your last movement direction.'),
+         'TRAP 3: Moves you 2 cells away from last direction.'),
         (map.Trap4_Coords, (200, 150, 255), '⊘',
-         'This trap will remove all treasures that have not been collected. All treasures that are collected will not be affected.'),
+         'TRAP 4: Removes all uncollected treasures.'),
         (map.Reward1_Coords, (80, 200, 170), '⊞',
-         'This reward will decrease the gravity of the world. Every step you take will consume half the energy as previous.'),
+         'REWARD 1: Every step consumes 0.5x energy as previous.'),
         (map.Reward2_Coords, (80, 200, 170), '⊠',
-         'This reward will increase your speed. You will take half the steps to move to the adjacent cell.'),
+         'REWARD 2: Moving to adjacent cell takes 0.5x steps.'),
         (map.Treasure_Coords, (255, 180, 20), None,
-         'Shiny, shimmering, splendid treasure. Just holding it gives you a big dopamine boost.')
+         'Treasure. Just holding it makes you happy for some reason.')
     ]
 
     # Single loop to process all coordinates and their properties
@@ -603,8 +721,8 @@ def draw_popup(screen, cursor_pos, selected_hex, font):
     popup_y = cursor_pos[1] + 10
 
     # Popup box
-    popup_width = 300
-    popup_height = 200
+    popup_width = 500
+    popup_height = 100
     popup_rect = pygame.Rect(
         popup_x, popup_y, popup_width, popup_height)
 
@@ -628,33 +746,67 @@ def main():
     screen = pygame.display.set_mode((1000, 800), pygame.RESIZABLE)
     pygame.display.set_caption("Treasure Hunt In a Virtual World")
     text = pygame.font.Font('Arial-Unicode-MS.ttf', 50)
-    text_desc = pygame.font.Font('Arial-Unicode-MS.ttf', 20)
+    text_desc = pygame.font.SysFont('Arial', 20, bold=True)
 
     # Initialize the map
     game_map = Map()
     # Make special hexagons list
     special_hexagons = make_special_hexagons(game_map)
-    # List map
-    hex_tiles = draw_map(game_map.hex_map, special_hexagons, HEX_RADIUS)
 
     # Variables
-    # For dragging map
-    map_offset_x = 0
-    map_offset_y = 0
-    dragging = False
-    drag_start_pos = (0, 0)
 
     # For hexagon highlighting and popups
     show_popup = False
     selected_hex = None
     cursor_pos = (0, 0)
 
+    # For player icon
+    last_move_time = 0
+    history_index = 0
+
+    # Initialize player icon
+    goal_history = goal.getHistory()
+    current_pos = goal_history[0]
+    x, y = cube_to_screen(current_pos[0], current_pos[1], HEX_RADIUS)
+    player_icon = PlayerIcon(x, y)
+
     running = True
+
     while running:
         # Draw map
         screen.fill(BACKGROUND_COLOUR)
+
+        # List map
+        hex_tiles = draw_map(game_map.hex_map, special_hexagons, HEX_RADIUS)
         for tile in hex_tiles:
             tile.draw(screen, text)
+
+        current_time = pygame.time.get_ticks()
+        # Update player position according to goal history
+        if current_time - last_move_time >= 200:
+            if history_index < len(goal_history):
+                current_pos = goal_history[history_index]
+                x, y = cube_to_screen(
+                    current_pos[0], current_pos[1], HEX_RADIUS, 100, 150)  # map offsets
+                player_icon.x = x
+                player_icon.y = y
+                history_index += 1
+                last_move_time = current_time
+            # Get position for last position
+            else:
+                current_pos = goal.getPosition()
+                x, y = cube_to_screen(
+                    current_pos[0], current_pos[1], HEX_RADIUS, 100, 150)  # map offsets
+                player_icon.x = x
+                player_icon.y = y
+            # Remove special hexagon if player is on it (basically removed after reached)
+            for hex_info in special_hexagons:
+                q, r, s = hex_info['coord']
+                if (q, r, s) == current_pos:
+                    special_hexagons.remove(hex_info)
+
+        # Draw player icon
+        player_icon.draw(screen)
 
         # Get cursor position
         cursor_pos = pygame.mouse.get_pos()
@@ -666,150 +818,36 @@ def main():
                 q, r, s = hex_info['coord']
                 # Convert cube coordinates to screen coordinates
                 x, y = cube_to_screen(
-                    q, r, HEX_RADIUS, offset_x=map_offset_x, offset_y=map_offset_y)
+                    q, r, HEX_RADIUS)
                 # Check if mouse over special hexagon, if so then highlight hexagon tile
                 if is_cursor_in_hex(cursor_pos[0], cursor_pos[1], hex_tile.x, hex_tile.y, hex_tile.radius) and (hex_tile.x, hex_tile.y) == (x, y):
                     hex_tile.highlight_hex(screen, (255, 255, 255), 3)
-                    # Check if hexagon clicked, if so then show popup
-                    if event.type == pygame.MOUSEBUTTONDOWN:
-                        selected_hex = hex_info
-                        show_popup = True
-                    else:
-                        show_popup = False
+                    hovered_hex = hex_info
+                    hovering_over_special_hex = True
 
         for event in pygame.event.get():
+            # To close window
             if event.type == pygame.QUIT:
                 running = False
 
             # Check if holding left mouse button (event.button == 1)
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                dragging = True
-                drag_start_pos = pygame.mouse.get_pos()
-
-            # Check if released left mouse button
-            elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                dragging = False
-
-            # While holding down left mouse button and moving mouse
-            elif event.type == pygame.MOUSEMOTION and dragging:
-                mouse_x, mouse_y = pygame.mouse.get_pos()
-                dx = mouse_x - drag_start_pos[0]
-                dy = mouse_y - drag_start_pos[1]
-                map_offset_x += dx
-                map_offset_y += dy
-                drag_start_pos = (mouse_x, mouse_y)
-                # Redraw map with updated offset
-                hex_tiles = draw_map(
-                    game_map.hex_map, special_hexagons, HEX_RADIUS, map_offset_x, map_offset_y)
+                print("pressed", hovering_over_special_hex)
+                # Check if hovering over a hexagon to show popup
+                if hovering_over_special_hex and not show_popup:
+                    show_popup = True
+                    selected_hex = hovered_hex
+                    popup_pos = cursor_pos
+                else:
+                    show_popup = False
 
         # Draw popup
-        if show_popup and selected_hex:
-            draw_popup(screen, cursor_pos, selected_hex, text_desc)
+        if show_popup:
+            draw_popup(screen, popup_pos, selected_hex, text_desc)
+            hovering_over_special_hex = False
 
         # Doesn't flip like a shape, just updates the display
         pygame.display.flip()
 
-    pygame.quit()
 
-
-if __name__ == "__main__":
-    main()
-"""
-
-startingTiles = []
-tileCoords = [Map.Trap1_Coords, Map.Trap2_Coords, Map.Trap3_Coords,
-              Map.Trap4_Coords, Map.Reward1_Coords, Map.Reward2_Coords, Map.Treasure_Coords]
-tileTypes = [TileType.TRAP1, TileType.TRAP2, TileType.TRAP3,
-             TileType.TRAP4, TileType.REWARD1, TileType.REWARD2, TileType.TREASURE]
-
-for i in range(len(tileTypes)):
-    for q, r, s in tileCoords[i]:
-        startingTiles.append(TrapOrReward((q, r, s), tileTypes[i]))
-
-def calcShortest(pos1: tuple[int, int, int], pos2: tuple[int, int, int]) -> float:
-    
-    #Calculate the Manhattan distance between two positions in the hexagonal grid
-    return (abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1]) + abs(pos1[2] - pos2[2])) / 2
-    
-def calcHscore(plyr: Player):
-    hscore = 0
-    treasures = []
-    rewards = []
-    tileStatus = plyr.tileStatus
-    for tile in tileStatus:
-        if (tile.trap_type == TileType.TREASURE) & tile.active:
-            treasures.append(tile)
-        elif ((tile.trap_type == TileType.REWARD1)  & tile.active  or (tile.trap_type == TileType.REWARD2) & tile.active):
-            rewards.append(tile)
-    for treasure in treasures:
-        hscore += calcShortest(plyr.getPosition(), treasure.coordinate) 
-    for reward in rewards:
-        rScore = 0
-        for treasure in treasures:
-            rScore += calcShortest(reward.coordinate, treasure.coordinate)
-        hscore += calcShortest(plyr.getPosition(), reward.coordinate) * rScore / 2
-        
-    
-    return (hscore * plyr.getEnergyCost() * plyr.getStepCost())
-
-def calcRewardDistance(pos1: tuple[int, int, int], pos2: tuple[int, int, int]) -> float:
-    return (abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1]) + abs(pos1[2] - pos2[2])) / 2
-
-def calcFScore(player: Player):
-    if player.canCollectTreasure == False: 
-        return math.inf
-    gfunc = player.energy
-    hfunc = calcHscore(player)
-    
-    return gfunc + hfunc
-
-# Change this to modify initial values
-STARTING_PLAYER = Player([], (0, 0, 0), startingTiles, 0, 0, 0, 1, 2)
-
-
-
-pioneers = []
-pioneers.append(STARTING_PLAYER)
-optimal = math.inf
-
-
-while len(pioneers) != 0:
-    
-    #Populate
-    lead = pioneers[0] #Take the least fscore
-    children = []
-    for path in new_map.check_valid_tiles(lead.position):
-        child = deepcopy(lead)
-        child.moveTile(path)
-        if new_map.hex_map[path] != TileType.EMPTY:
-            for tile in child.tileStatus:
-                if tile.coordinate == path:
-                    tile.apply(child)
-        if optimal > calcFScore(child):
-            children.append(child)
-    del pioneers[0]
-            
-    #Goal Test
-    for candidate in children:
-        if candidate.treasure == 4:
-            if calcFScore(candidate) < optimal:
-                optimal = calcFScore(candidate)
-                goal = deepcopy(candidate)
-            del candidate
-        else:
-            pioneers.append(candidate)
-
-    #Cull Pioneers
-    for plyr in pioneers:
-        if optimal < calcFScore(plyr):
-            if plyr in pioneers:
-                pioneers.remove(plyr)
-
-    #Sort
-    pioneers.sort(key= lambda x: calcFScore(x), reverse=False)
-    if len(pioneers) != 0:
-        print(calcFScore(pioneers[0]))
-        print(len(pioneers))
-        print(optimal)
-
-print(goal)
+main()
