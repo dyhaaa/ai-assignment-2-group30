@@ -28,11 +28,11 @@ class TileType(Enum):
     REWARD1 = 8
     REWARD2 = 9
 
-
+#Deals with The Activation and logic of all The Traps, Rewards and Treasure
 class TrapOrReward:
     def __init__(self, coordinate, trap_type: TileType, active=True):
         self.coordinate = coordinate  # Coords from the Map
-        self.trap_type = trap_type  # 'Trap1', 'Trap2', etc.
+        self.trap_type = trap_type  # 'Trap1', 'Trap2', 'Rewards1', 'Treasure' and ect.
         self.active = active  # Setting to Activate trap
 
     def __str__(self):
@@ -43,27 +43,42 @@ class TrapOrReward:
         if not self.active:
             return
 
+        # Trap 1 Every step you take will consume double the energy as previous steps.
+        # Modifies the Energy Cost and doubles it
         if self.trap_type == TileType.TRAP1:
             player.setEnergyCost(player.getEnergyCost() * 2)
 
+        # Trap 2 Takes double the steps to move to the adjacent cell.
+        # Modifies the Step Cost and doubles it
         elif self.trap_type == TileType.TRAP2:
             player.setStepCost(player.getStepCost() * 2)
 
+        # Trap 3 This trap will move you two cells away following your last movement direction.
+        # Actual Trap Logic is done in Player Class
         elif self.trap_type == TileType.TRAP3:
-            player.trap3(new_map)  # Uses Adams Trap
+            player.trap3(new_map)
 
+        # Trap 4 This trap removes the ability for the Player to pickup any more treasures.
+        # Activates ToggleTreasure Function to toggle Player's ability to pick up treasures
         elif self.trap_type == TileType.TRAP4:
             player.toggleTreasure()
 
+        # Reward 1 Every step you take will consume half the energy as previous steps.
+        # Modifies the Energy Cost and halves it
         elif self.trap_type == TileType.REWARD1:
             player.setEnergyCost(player.getEnergyCost() / 2)
 
+        # Reward 2 Takes Half the steps to move to the adjacent cell.
+        # Modifies the Step Cost and halves it
         elif self.trap_type == TileType.REWARD2:
             player.setStepCost(player.getStepCost() / 2)
 
+        # Treasure Well its Treasure, The Objective to be picked up by the Search Algorithm
+        # Collects the treasure and adds it to the Players statistic.
         elif self.trap_type == TileType.TREASURE:
             player.collectTreasure()
 
+        # Turns off the Trap/Reward/Treasure once its completed
         self.active = False
 
 
@@ -140,7 +155,6 @@ class Player:
     def setEnergyCost(self, new: float):
         self.energyCost = new
 
-    # Class Methods
     # Stores the current position in history then sets the position in the parameters to the new one, also adds the steps and energy based on stepCost and energyCost
     def moveTile(self, target: tuple[int, int, int]):
         # Check weather tile is valid
@@ -152,12 +166,14 @@ class Player:
             if tile.coordinate == target:
                 tile.apply(self)
 
+    # Toggles if The Treasure can be Collected
     def toggleTreasure(self):
         self.canCollectTreasure = False
 
- # Testing the functionality of history
-
+    # Logic for Trap 3
+    # MP - Game Map
     def trap3(self, mp):
+        # Gets the current position of the Player and the one before it
         curQ, curR, curS = self.position
         q, r, s = self.history[-1]
 
@@ -171,9 +187,13 @@ class Player:
         new_r = curR - 2 * dr
         new_s = curS - 2 * ds
 
+        # Checking if q,r,s value is Valid.
         if new_q + new_r + new_s != 0:
             print("Invalid push-back position!")
             return
+        
+        # Checking for IF the New position location is IN located IN an obsatable
+        # In This Case Instead of moving backwards TWICE It moves the Player only 1 Tile Backwards
         if (new_q, new_r, new_s) in mp.hex_map:
             if mp.hex_map[(new_q, new_r, new_s)] != TileType.OBSTACLE:
                 print(
@@ -184,6 +204,9 @@ class Player:
                     if tile.coordinate == (new_q, new_r, new_s):
                         tile.apply(self)
                 return
+        
+        # Checking for IF the New position location is IN located IN an the Playable Game Map
+        # In This Case Instead of moving backwards TWICE It moves the Player only 1 Tile Backwards
         if (new_q + dq, new_r + dr, new_s + ds) in mp.hex_map:
             if mp.hex_map[(new_q + dq, new_r + dr, new_s + ds)] != TileType.OBSTACLE:
                 print(
@@ -195,19 +218,19 @@ class Player:
                         tile.apply(self)
             else:
                 return
-    # Method for Collecting Treasure Also used to Checking Treasure
 
+    # Method for Collecting Treasure Also used to Checking Treasure
     def collectTreasure(self):
         # If Trap 4 hasnt been hit use this
         if self.canCollectTreasure:
             self.treasure += 1
             print("Treasure collected!")
+    # IF Trap 4 is Activated this will be printed out
         else:
             print("No More Treasure can be Collected. Trap 4 Activated.")
 
 
 class Map:
-
     # A tuple containing coordinates for all existing special hexagons (obstacles, traps, rewards, treasures) on the map
     Obstacle_Coords = (
         (0, 3, -3),
