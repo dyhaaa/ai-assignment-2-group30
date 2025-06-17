@@ -28,11 +28,14 @@ class TileType(Enum):
     REWARD1 = 8
     REWARD2 = 9
 
-#Deals with The Activation and logic of all The Traps, Rewards and Treasure
+# Deals with The Activation and logic of all The Traps, Rewards and Treasure
+
+
 class TrapOrReward:
     def __init__(self, coordinate, trap_type: TileType, active=True):
         self.coordinate = coordinate  # Coords from the Map
-        self.trap_type = trap_type  # 'Trap1', 'Trap2', 'Rewards1', 'Treasure' and ect.
+        # 'Trap1', 'Trap2', 'Rewards1', 'Treasure' and etc.
+        self.trap_type = trap_type
         self.active = active  # Setting to Activate trap
 
     def __str__(self):
@@ -115,7 +118,8 @@ class Player:
 
     def getTileStatus(self):
         return self.position
-    #test
+    # test
+
     def getTreasure(self):
         return self.treasure
 
@@ -191,7 +195,7 @@ class Player:
         if new_q + new_r + new_s != 0:
             print("Invalid push-back position!")
             return
-        
+
         # Checking for IF the New position location is IN located IN an obsatable
         # In This Case Instead of moving backwards TWICE It moves the Player only 1 Tile Backwards
         if (new_q, new_r, new_s) in mp.hex_map:
@@ -204,7 +208,7 @@ class Player:
                     if tile.coordinate == (new_q, new_r, new_s):
                         tile.apply(self)
                 return
-        
+
         # Checking for IF the New position location is IN located IN an the Playable Game Map
         # In This Case Instead of moving backwards TWICE It moves the Player only 1 Tile Backwards
         if (new_q + dq, new_r + dr, new_s + ds) in mp.hex_map:
@@ -593,7 +597,11 @@ SCREEN_SIZE = (1200, 800)
 BACKGROUND_COLOUR = (220, 220, 220)
 HEX_DEFAULT_COLOUR = (255, 255, 255)
 HEX_RADIUS = 50  # Size of hexagon
-SIMULATION_TIME_BETWEEN_STEPS = 200  # Change value to change speed of simulation
+SIMULATION_TIME_BETWEEN_STEPS = [  # To adjust simulation speed
+    (300, 'Slow'),
+    (150, 'Normal'),
+    (50, 'Fast')
+]
 
 
 class HexagonTile:
@@ -622,7 +630,7 @@ class HexagonTile:
         # Draw outline
         pygame.draw.polygon(screen, (0, 0, 0), self.get_corners(), 2)
 
-        # Draw icon if needed
+        # Draw icon if there is icon
         if self.icon:
             symbol = font.render(self.icon, True, (255, 255, 255))
             symbol_rect = symbol.get_rect(center=(self.x, self.y-5))
@@ -635,6 +643,7 @@ class HexagonTile:
 
 
 class PlayerIcon:
+    # Class for player icon
     def __init__(self, x, y, radius=10, colour=(255, 0, 0)):
         self.x = x
         self.y = y
@@ -647,6 +656,7 @@ class PlayerIcon:
 
 
 class Button:
+    # Class for button
     def __init__(self, x, y, width, height, text, font, colour, hover_colour):
         self.rect = pygame.Rect(x, y, width, height)
         self.text = text
@@ -658,6 +668,7 @@ class Button:
     def draw(self, screen):
         mouse = pygame.mouse.get_pos()
         if self.rect.collidepoint(mouse):
+            # Change colour if hovered over
             pygame.draw.rect(screen, self.hover_colour, self.rect)
         else:
             pygame.draw.rect(screen, self.colour, self.rect)
@@ -666,6 +677,7 @@ class Button:
         text_rect = text_surface.get_rect(center=self.rect.center)
         screen.blit(text_surface, text_rect)
 
+    # For being clicked on
     def is_clicked(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             return self.rect.collidepoint(event.pos)
@@ -715,6 +727,7 @@ def is_cursor_in_hex(x, y, hex_x, hex_y, radius):
     # Check distance
     distance_x = x - hex_x
     distance_y = y - hex_y
+
     # Get distance of cursor from hex (triangle pythagorean theorem)
     distance = math.sqrt(distance_x**2 + distance_y**2)
     return distance <= radius
@@ -733,24 +746,24 @@ def make_special_hexagons(map):
     ]
 
     # Add special hexagons from map
-    # List of tuples containing the coordinate list and their properties
+    # List of tuples containing the special hexagons coordinate list and their properties
     coord_lists = [
         (map.Obstacle_Coords, (100, 100, 100), None,
-         'Obstacle. A big, annoying boulder.'),
+         'OBSTACLE. A big, annoying boulder.'),
         (map.Trap1_Coords, (200, 150, 255), '⊖',
-         'TRAP 1: Every step consumes 2x energy as previous.'),
+         'STICKY TRAP: Every step consumes 2x energy as previous.'),
         (map.Trap2_Coords, (200, 150, 255), '⊕',
-         'TRAP 2: Moving to adjacent cell takes 2x steps.'),
+         'BREAK A LEG TRAP: Moving to adjacent cell takes 2x steps.'),
         (map.Trap3_Coords, (200, 150, 255), '⊗',
-         'TRAP 3: Moves you 2 cells away from last direction.'),
+         'SPRING TRAP: Moves you 2 cells away from last direction.'),
         (map.Trap4_Coords, (200, 150, 255), '⊘',
-         'TRAP 4: Removes all uncollected treasures.'),
+         'LOOT BAG RIP TRAP: Removes all uncollected treasures.'),
         (map.Reward1_Coords, (80, 200, 170), '⊞',
-         'REWARD 1: Every step consumes 0.5x energy as previous.'),
+         'ANTIGRAVITY: Every step consumes 0.5x energy as previous.'),
         (map.Reward2_Coords, (80, 200, 170), '⊠',
-         'REWARD 2: Moving to adjacent cell takes 0.5x steps.'),
+         'SPEED BOOST: Moving to adjacent cell takes 0.5x steps.'),
         (map.Treasure_Coords, (255, 180, 20), None,
-         'Treasure. Just holding it makes you happy for some reason.')
+         'TREASURE. Just holding it makes you feel joy.')
     ]
 
     # Single loop to process all coordinates and their properties
@@ -799,8 +812,8 @@ def show_steps_and_energy(screen, step_counter, energy_counter, font):
         f"Energy consumed: {energy_counter}", True, (0, 0, 0))
 
     # Draw text at location
-    screen.blit(step_text, (950, 250))
-    screen.blit(energy_text, (950, 300))
+    screen.blit(step_text, (950, 300))
+    screen.blit(energy_text, (950, 350))
 
 
 def main():
@@ -834,6 +847,11 @@ def main():
     last_move_time = 0
     history_index = 0
 
+    # For simulation speed
+    speed_index = 1  # Normal speed
+    speed = SIMULATION_TIME_BETWEEN_STEPS
+    current_speed = speed[speed_index][0]
+
     # Initialize player icon
     goal_history = goal.getHistory()
     current_pos = goal_history[0]
@@ -843,6 +861,9 @@ def main():
     # Create play/reset button
     play_button = Button(950, 100, 150, 100, "PLAY", font_button, colour=(
         100, 200, 0), hover_colour=(0, 255, 0))
+    # Create speed button
+    speed_button = Button(950, 200, 150, 70, "SPEED: Normal", font_desc, colour=(
+        100, 100, 100), hover_colour=(150, 150, 150))
 
     # Run UI
     running = True
@@ -856,15 +877,16 @@ def main():
         for tile in hex_tiles:
             tile.draw(screen, font)
 
-        # Draw play button
+        # Draw buttons
         play_button.draw(screen)
+        speed_button.draw(screen)
 
         # Run simulation
         current_time = pygame.time.get_ticks()
         if sim_running:
 
             # Update player position according to goal history
-            if current_time - last_move_time >= SIMULATION_TIME_BETWEEN_STEPS:
+            if current_time - last_move_time >= current_speed:
 
                 # For positions before last position
                 if history_index < len(goal_history):
@@ -913,7 +935,7 @@ def main():
                 # Check if mouse over special hexagon, if so then highlight hexagon tile
                 if is_cursor_in_hex(cursor_pos[0], cursor_pos[1], hex_tile.x, hex_tile.y, hex_tile.radius) and (hex_tile.x, hex_tile.y) == (x, y):
                     hex_tile.highlight_hex(screen, (255, 255, 255), 3)
-                    hovered_hex = hex_info
+                    hovered_hex = hex_info  # Get details of hexagon being hovered over
                     hovering_over_special_hex = True
 
         for event in pygame.event.get():
@@ -921,6 +943,13 @@ def main():
             # To close window
             if event.type == pygame.QUIT:
                 running = False
+
+            # Check speed button pressed
+            if speed_button.is_clicked(event):
+                # Change speed, change speed button text
+                speed_index = (speed_index + 1) % len(speed)
+                current_speed = speed[speed_index][0]
+                speed_button.text = "SPEED: " + speed[speed_index][1]
 
             # Check play/reset button pressed
             if play_button.is_clicked(event):
@@ -958,11 +987,15 @@ def main():
 
                 # Check if hovering over a hexagon to show popup
                 if hovering_over_special_hex and not show_popup:
+                    # Show popup
                     show_popup = True
+                    # Set selected_hex to the hex being hovered over
                     selected_hex = hovered_hex
+                    # Set position of popup to cursor location
                     popup_pos = cursor_pos
 
                 else:
+                    # Close popup by clicking away
                     show_popup = False
 
         # Draw popup
