@@ -840,7 +840,6 @@ def main():
     # For hexagon highlighting and popups
     show_popup = False
     selected_hex = None
-    hovering_over_special_hex = False
     cursor_pos = (0, 0)
 
     # For player icon
@@ -922,6 +921,9 @@ def main():
         # Get cursor position
         cursor_pos = pygame.mouse.get_pos()
 
+        # Reset state to not hovering over special hexagon
+        hovering_over_special_hex = False
+
         # Check if hovering over special hexagon
         for hex_tile in hex_tiles:
             for hex_info in special_hexagons:
@@ -1001,7 +1003,6 @@ def main():
         # Draw popup
         if show_popup:
             draw_popup(screen, popup_pos, selected_hex, font_desc)
-            hovering_over_special_hex = False
 
         # Doesn't flip like a shape, just updates the display
         pygame.display.flip()
