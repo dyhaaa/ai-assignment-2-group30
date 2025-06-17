@@ -145,7 +145,7 @@ class Player:
         self.history.append(self.position)
         self.position = target
         self.step += self.stepCost
-        self.energy += self.energyCost
+        self.energy += self.energyCost * self.stepCost
         for tile in self.tileStatus:
             if tile.coordinate == target:
                 tile.apply(self)
