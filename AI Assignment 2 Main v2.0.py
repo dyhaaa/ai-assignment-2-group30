@@ -566,10 +566,11 @@ print(goal)
 # MAP UI
 # Constant variables
 
+SCREEN_SIZE = (1200, 800)
 BACKGROUND_COLOUR = (220, 220, 220)
 HEX_DEFAULT_COLOUR = (255, 255, 255)
 HEX_RADIUS = 50  # Size of hexagon
-SIMULATION_TIME_BETWEEN_STEPS = 200
+SIMULATION_TIME_BETWEEN_STEPS = 200  # Change value to change speed of simulation
 
 
 class HexagonTile:
@@ -592,7 +593,7 @@ class HexagonTile:
             vertices.append((point_x, point_y))
         return vertices
 
-    def draw(self, screen, text):
+    def draw(self, screen, font):
         # Draw hexagon
         pygame.draw.polygon(screen, self.colour, self.get_corners())
         # Draw outline
@@ -600,7 +601,7 @@ class HexagonTile:
 
         # Draw icon if needed
         if self.icon:
-            symbol = text.render(self.icon, True, (255, 255, 255))
+            symbol = font.render(self.icon, True, (255, 255, 255))
             symbol_rect = symbol.get_rect(center=(self.x, self.y-5))
             screen.blit(symbol, symbol_rect)
 
@@ -611,15 +612,41 @@ class HexagonTile:
 
 
 class PlayerIcon:
-    def __init__(self, x, y, radius=10, color=(255, 0, 0)):
+    def __init__(self, x, y, radius=10, colour=(255, 0, 0)):
         self.x = x
         self.y = y
         self.radius = radius
-        self.color = color
+        self.colour = colour
 
     def draw(self, screen):
-        pygame.draw.circle(screen, self.color,
+        pygame.draw.circle(screen, self.colour,
                            (int(self.x), int(self.y)), self.radius)
+
+
+class Button:
+    def __init__(self, x, y, width, height, text, font, colour, hover_colour):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.text = text
+        self.font = font
+        self.colour = colour
+        self.hover_colour = hover_colour
+        self.text_colour = (255, 255, 255)
+
+    def draw(self, screen):
+        mouse = pygame.mouse.get_pos()
+        if self.rect.collidepoint(mouse):
+            pygame.draw.rect(screen, self.hover_colour, self.rect)
+        else:
+            pygame.draw.rect(screen, self.colour, self.rect)
+
+        text_surface = self.font.render(self.text, True, self.text_colour)
+        text_rect = text_surface.get_rect(center=self.rect.center)
+        screen.blit(text_surface, text_rect)
+
+    def is_clicked(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            return self.rect.collidepoint(event.pos)
+        return False
 
 
 def cube_to_screen(q, r, radius, origin_x=100, origin_y=150, offset_x=0, offset_y=0):
@@ -741,13 +768,29 @@ def draw_popup(screen, cursor_pos, selected_hex, font):
     screen.blit(description_surface, description_rect)
 
 
+def show_steps_and_energy(screen, step_counter, energy_counter, font):
+    # Render text with given font
+    step_text = font.render(
+        f"Steps taken: {step_counter}", True, (0, 0, 0))
+    energy_text = font.render(
+        f"Energy consumed: {energy_counter}", True, (0, 0, 0))
+
+    # Draw text at location
+    screen.blit(step_text, (950, 250))
+    screen.blit(energy_text, (950, 300))
+
+
 def main():
+
     # Initialise screen for display
     pygame.init()
-    screen = pygame.display.set_mode((1000, 800), pygame.RESIZABLE)
+    screen = pygame.display.set_mode(SCREEN_SIZE, pygame.RESIZABLE)
     pygame.display.set_caption("Treasure Hunt In a Virtual World")
-    text = pygame.font.Font('Arial-Unicode-MS.ttf', 50)
-    text_desc = pygame.font.SysFont('Arial', 20, bold=True)
+
+    # Fonts
+    font = pygame.font.Font('Arial-Unicode-MS.ttf', 50)
+    font_desc = pygame.font.SysFont('Arial', 20, bold=True)
+    font_button = pygame.font.Font('Arial-Unicode-MS.ttf', 35)
 
     # Initialize the map
     game_map = Map()
@@ -755,10 +798,13 @@ def main():
     special_hexagons = make_special_hexagons(game_map)
 
     # Variables
+    # For simulation play/reset
+    sim_running = False
 
     # For hexagon highlighting and popups
     show_popup = False
     selected_hex = None
+    hovering_over_special_hex = False
     cursor_pos = (0, 0)
 
     # For player icon
@@ -771,6 +817,11 @@ def main():
     x, y = cube_to_screen(current_pos[0], current_pos[1], HEX_RADIUS)
     player_icon = PlayerIcon(x, y)
 
+    # Create play/reset button
+    play_button = Button(950, 100, 150, 100, "PLAY", font_button, colour=(
+        100, 200, 0), hover_colour=(0, 255, 0))
+
+    # Run UI
     running = True
 
     while running:
@@ -780,31 +831,45 @@ def main():
         # List map
         hex_tiles = draw_map(game_map.hex_map, special_hexagons, HEX_RADIUS)
         for tile in hex_tiles:
-            tile.draw(screen, text)
+            tile.draw(screen, font)
 
+        # Draw play button
+        play_button.draw(screen)
+
+        # Run simulation
         current_time = pygame.time.get_ticks()
-        # Update player position according to goal history
-        if current_time - last_move_time >= SIMULATION_TIME_BETWEEN_STEPS:
-            if history_index < len(goal_history):
-                current_pos = goal_history[history_index]
-                x, y = cube_to_screen(
-                    current_pos[0], current_pos[1], HEX_RADIUS, 100, 150)  # map offsets
-                player_icon.x = x
-                player_icon.y = y
-                history_index += 1
-                last_move_time = current_time
-            # Get position for last position
-            else:
-                current_pos = goal.getPosition()
-                x, y = cube_to_screen(
-                    current_pos[0], current_pos[1], HEX_RADIUS, 100, 150)  # map offsets
-                player_icon.x = x
-                player_icon.y = y
-            # Remove special hexagon if player is on it (basically removed after reached)
-            for hex_info in special_hexagons:
-                q, r, s = hex_info['coord']
-                if (q, r, s) == current_pos and (q, r, s) != (0, 0, 0):
-                    special_hexagons.remove(hex_info)
+        if sim_running:
+
+            # Update player position according to goal history
+            if current_time - last_move_time >= SIMULATION_TIME_BETWEEN_STEPS:
+
+                # For positions before last position
+                if history_index < len(goal_history):
+                    current_pos = goal_history[history_index]
+                    x, y = cube_to_screen(
+                        current_pos[0], current_pos[1], HEX_RADIUS, 100, 150)  # map offsets
+                    player_icon.x = x
+                    player_icon.y = y
+                    history_index += 1
+                    last_move_time = current_time
+
+                # Get position for last position
+                else:
+                    current_pos = goal.getPosition()
+                    x, y = cube_to_screen(
+                        current_pos[0], current_pos[1], HEX_RADIUS, 100, 150)  # map offsets
+                    player_icon.x = x
+                    player_icon.y = y
+
+                    # Show total steps and energy consumed
+                    show_steps_and_energy(
+                        screen, goal.getStep(), goal.getEnergy(), font_desc)
+
+                # Remove special hexagon if player is on it (basically removed after reached)
+                for hex_info in special_hexagons:
+                    q, r, s = hex_info['coord']
+                    if (q, r, s) == current_pos and (q, r, s) != (0, 0, 0):
+                        special_hexagons.remove(hex_info)
 
         # Draw player icon
         player_icon.draw(screen)
@@ -817,9 +882,11 @@ def main():
             for hex_info in special_hexagons:
                 # Get cube coordinates
                 q, r, s = hex_info['coord']
+
                 # Convert cube coordinates to screen coordinates
                 x, y = cube_to_screen(
                     q, r, HEX_RADIUS)
+
                 # Check if mouse over special hexagon, if so then highlight hexagon tile
                 if is_cursor_in_hex(cursor_pos[0], cursor_pos[1], hex_tile.x, hex_tile.y, hex_tile.radius) and (hex_tile.x, hex_tile.y) == (x, y):
                     hex_tile.highlight_hex(screen, (255, 255, 255), 3)
@@ -827,24 +894,57 @@ def main():
                     hovering_over_special_hex = True
 
         for event in pygame.event.get():
+
             # To close window
             if event.type == pygame.QUIT:
                 running = False
 
-            # Check if holding left mouse button (event.button == 1)
+            # Check play/reset button pressed
+            if play_button.is_clicked(event):
+
+                if sim_running:
+                    # Reset simulation
+                    history_index = 0
+                    last_move_time = 0
+                    current_pos = goal_history[0]
+                    x, y = cube_to_screen(
+                        current_pos[0], current_pos[1], HEX_RADIUS, 100, 150)
+                    player_icon.x = x
+                    player_icon.y = y
+                    sim_running = False
+                    special_hexagons = make_special_hexagons(game_map)
+
+                    # Change back to 'Play' button
+                    play_button.text = "PLAY"
+                    play_button.colour = (100, 200, 0)
+                    play_button.hover_colour = (0, 255, 0)
+                    print(sim_running)
+
+                else:
+                    # Start simulation
+                    sim_running = True
+
+                    # Change to 'Reset' button
+                    play_button.text = "RESET"
+                    play_button.colour = (150, 50, 0)
+                    play_button.hover_colour = (255, 80, 0)
+                    print(sim_running)
+
+            # Check if pressed left mouse button (event.button == 1)
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                print("pressed", hovering_over_special_hex)
+
                 # Check if hovering over a hexagon to show popup
                 if hovering_over_special_hex and not show_popup:
                     show_popup = True
                     selected_hex = hovered_hex
                     popup_pos = cursor_pos
+
                 else:
                     show_popup = False
 
         # Draw popup
         if show_popup:
-            draw_popup(screen, popup_pos, selected_hex, text_desc)
+            draw_popup(screen, popup_pos, selected_hex, font_desc)
             hovering_over_special_hex = False
 
         # Doesn't flip like a shape, just updates the display
