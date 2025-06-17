@@ -744,9 +744,13 @@ def calcHscore(plyr: Player):
     for treasure in treasures:
         hscore += calcShortest(plyr.getPosition(), treasure.coordinate) 
     for reward in rewards:
-        hscore *= calcRewardDistance(plyr.getPosition(), reward.coordinate)
+        rScore = 0
+        for treasure in treasures:
+            rScore += calcShortest(reward.coordinate, treasure.coordinate)
+        hscore += calcShortest(plyr.getPosition(), reward.coordinate) * rScore / 2
+        
     
-    return hscore * plyr.getEnergyCost() * plyr.getStepCost()
+    return (hscore * plyr.getEnergyCost() * plyr.getStepCost())
 
 def calcRewardDistance(pos1: tuple[int, int, int], pos2: tuple[int, int, int]) -> float:
     return (abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1]) + abs(pos1[2] - pos2[2])) / 2
