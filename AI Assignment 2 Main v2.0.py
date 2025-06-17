@@ -100,7 +100,7 @@ class Player:
 
     def getTileStatus(self):
         return self.position
-
+    #test
     def getTreasure(self):
         return self.treasure
 
